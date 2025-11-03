@@ -1,0 +1,29 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\loyal\\Source\\Repos\\communityboardv2\\communityboard.cms\\wwwroot\\.placeholder",
+      "PackagePath": "staticwebassets\\.placeholder"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.CommunityBoard.Cms.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.CommunityBoard.Cms.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.CommunityBoard.Cms.props",
+      "PackagePath": "build\\CommunityBoard.Cms.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.CommunityBoard.Cms.props",
+      "PackagePath": "buildMultiTargeting\\CommunityBoard.Cms.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.CommunityBoard.Cms.props",
+      "PackagePath": "buildTransitive\\CommunityBoard.Cms.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
