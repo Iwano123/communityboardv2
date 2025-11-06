@@ -20,6 +20,8 @@
   <ItemGroup>
     <PackageReference Include="OrchardCore.Logging.NLog" Version="2.2.1" />
     <PackageReference Include="OrchardCore.Application.Cms.Targets" Version="2.2.1" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.7" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
   </ItemGroup>
 
 </Project>

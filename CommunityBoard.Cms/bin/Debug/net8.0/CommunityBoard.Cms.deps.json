@@ -8,6 +8,8 @@
     ".NETCoreApp,Version=v8.0": {
       "CommunityBoard.Cms/1.0.0": {
         "dependencies": {
+          "BCrypt.Net-Next": "4.0.3",
+          "Microsoft.Data.Sqlite": "9.0.7",
           "OrchardCore.Application.Cms.Targets": "2.2.1",
           "OrchardCore.Logging.NLog": "2.2.1"
         },
@@ -208,6 +210,14 @@
           "lib/net8.0/Azure.Storage.Common.dll": {
             "assemblyVersion": "12.24.0.0",
             "fileVersion": "12.2400.25.36407"
+          }
+        }
+      },
+      "BCrypt.Net-Next/4.0.3": {
+        "runtime": {
+          "lib/net6.0/BCrypt.Net-Next.dll": {
+            "assemblyVersion": "4.0.3.0",
+            "fileVersion": "4.0.3.0"
           }
         }
       },
@@ -7544,6 +7554,13 @@
       "sha512": "sha512-JOmmSgNvH/zRWRihT6PZapEdTNESP4YtGS5OjbkUAg6EFiM6Ite7hDkqzJrA7QKmi1SRwZ40vpHi1McVpQuhgw==",
       "path": "azure.storage.common/12.24.0",
       "hashPath": "azure.storage.common.12.24.0.nupkg.sha512"
+    },
+    "BCrypt.Net-Next/4.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-W+U9WvmZQgi5cX6FS5GDtDoPzUCV4LkBLkywq/kRZhuDwcbavOzcDAr3LXJFqHUi952Yj3LEYoWW0jbEUQChsA==",
+      "path": "bcrypt.net-next/4.0.3",
+      "hashPath": "bcrypt.net-next.4.0.3.nupkg.sha512"
     },
     "BouncyCastle.Cryptography/2.4.0": {
       "type": "package",

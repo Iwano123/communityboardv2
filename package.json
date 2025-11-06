@@ -4,13 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd backend && dotnet run",
+    "dev": "concurrently \"npm run dev:orchard\" \"npm run dev:frontend\"",
+    "dev:orchard": "cd CommunityBoard.Cms && dotnet run",
     "dev:frontend": "npm run dev:vite",
     "dev:vite": "vite",
-    "install:frontend": "npm install",
-    "install:backend": "cd backend && dotnet restore",
-    "install": "npm run install:backend"
+    "build": "vite build",
+    "install:orchard": "cd CommunityBoard.Cms && dotnet restore",
+    "postinstall": "npm run install:orchard"
   },
   "dependencies": {
     "react": "^18.3.1",

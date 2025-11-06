@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\iwanp\\Source\\Repos\\communityboardv2\\CommunityBoard.Cms\\CommunityBoard.Cms.csproj": {}
+    "C:\\Users\\iwanp\\source\\repos\\communityboardv2\\CommunityBoard.Cms\\CommunityBoard.Cms.csproj": {}
   },
   "projects": {
-    "C:\\Users\\iwanp\\Source\\Repos\\communityboardv2\\CommunityBoard.Cms\\CommunityBoard.Cms.csproj": {
+    "C:\\Users\\iwanp\\source\\repos\\communityboardv2\\CommunityBoard.Cms\\CommunityBoard.Cms.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\iwanp\\Source\\Repos\\communityboardv2\\CommunityBoard.Cms\\CommunityBoard.Cms.csproj",
+        "projectUniqueName": "C:\\Users\\iwanp\\source\\repos\\communityboardv2\\CommunityBoard.Cms\\CommunityBoard.Cms.csproj",
         "projectName": "CommunityBoard.Cms",
-        "projectPath": "C:\\Users\\iwanp\\Source\\Repos\\communityboardv2\\CommunityBoard.Cms\\CommunityBoard.Cms.csproj",
+        "projectPath": "C:\\Users\\iwanp\\source\\repos\\communityboardv2\\CommunityBoard.Cms\\CommunityBoard.Cms.csproj",
         "packagesPath": "C:\\Users\\iwanp\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\iwanp\\Source\\Repos\\communityboardv2\\CommunityBoard.Cms\\obj\\",
+        "outputPath": "C:\\Users\\iwanp\\source\\repos\\communityboardv2\\CommunityBoard.Cms\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -50,6 +50,14 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.0.3, )"
+            },
+            "Microsoft.Data.Sqlite": {
+              "target": "Package",
+              "version": "[9.0.7, )"
+            },
             "OrchardCore.Application.Cms.Targets": {
               "target": "Package",
               "version": "[2.2.1, )"
