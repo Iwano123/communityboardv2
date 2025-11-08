@@ -108,7 +108,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CommunityBoard.Cms")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8cbaba3c1722d422df70a1878bb996c620fee88f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b8e4ef90062406b3000090fbe425870d6e6fb342")]
 [assembly: System.Reflection.AssemblyProductAttribute("CommunityBoard.Cms")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CommunityBoard.Cms")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
