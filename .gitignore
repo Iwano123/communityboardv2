@@ -11,6 +11,10 @@ backend/bin
 CommunityBoard.Cms/bin/
 CommunityBoard.Cms/obj/
 CommunityBoard.Cms/App_Data/
+# Explicitly ignore the database file
+*.db
+*.db-shm
+*.db-wal
 
 # Logs
 logs
