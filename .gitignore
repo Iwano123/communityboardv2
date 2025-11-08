@@ -8,6 +8,9 @@ backend/_db.sqlite3
 # Do not git control build related .NET folders
 backend/obj
 backend/bin
+CommunityBoard.Cms/bin/
+CommunityBoard.Cms/obj/
+CommunityBoard.Cms/App_Data/
 
 # Logs
 logs
