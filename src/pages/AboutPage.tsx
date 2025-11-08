@@ -13,7 +13,7 @@ export default function AboutPage() {
         <Col lg={8} className="mx-auto">
           <Card>
             <Card.Body>
-              <h1 className="card-title">About Community Board</h1>
+              <h1 className="card-title">About Orchid</h1>
               <p className="card-text">
                 Welcome to our community bulletin board! This platform connects neighbors, 
                 promotes local events, and helps build stronger communities.

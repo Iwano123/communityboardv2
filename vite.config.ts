@@ -60,8 +60,8 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Community Bulletin Board',
-        short_name: 'Bulletin Board',
+        name: 'Orchid',
+        short_name: 'Orchid',
         description: 'A community bulletin board for local posts, sales, and events',
         theme_color: '#1d9bf0',
         background_color: '#ffffff',

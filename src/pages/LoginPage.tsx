@@ -63,7 +63,7 @@ export default function LoginPage() {
                     fontSize: '20px'
                   }}
                 >
-                  C
+                  O
                 </div>
                 <h4 className="mb-0 text-twitter-dark">Welcome back</h4>
               </div>

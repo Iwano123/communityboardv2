@@ -2,7 +2,6 @@ import { Outlet } from 'react-router-dom';
 import { useStateObject } from './utils/useStateObject';
 import { useEffect, useState } from 'react';
 import Header from './partials/Header';
-import Footer from './partials/Footer';
 import type { User } from './interfaces/BulletinBoard';
 
 export default function App() {
@@ -60,7 +59,6 @@ export default function App() {
       <main className="flex-grow-1" style={{ paddingTop: '80px' }}>
         <Outlet context={[state, setState, user, setUser]} />
       </main>
-      <Footer />
     </div>
   );
 }

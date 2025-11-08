@@ -74,9 +74,9 @@ export default function Header({ user, setUser, isDarkMode, setIsDarkMode }: Hea
                 fontSize: '16px'
               }}
             >
-              C
+              O
             </div>
-            <span className="fw-bold text-twitter-dark">Community</span>
+            <span className="fw-bold text-twitter-dark">Orchid</span>
           </div>
         </Navbar.Brand>
 
