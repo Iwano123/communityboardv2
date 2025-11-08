@@ -14,6 +14,7 @@ import AdminPanelPage from './pages/AdminPanelPage.tsx';
 import LoginPage from './pages/LoginPage.tsx';
 import RegisterPage from './pages/RegisterPage.tsx';
 import ProfilePage from './pages/ProfilePage.tsx';
+import ChatPage from './pages/ChatPage.tsx';
 
 export default [
   AboutPage,
@@ -27,7 +28,8 @@ export default [
   AdminPanelPage,
   LoginPage,
   RegisterPage,
-  ProfilePage
+  ProfilePage,
+  ChatPage
 ]
   // map the route property of each page component to a Route
   .map(x => {

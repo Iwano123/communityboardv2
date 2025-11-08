@@ -190,11 +190,42 @@ public class ApiController : ControllerBase
     {
         var sql = "";
         var parameters = new Dictionary<string, object?>();
+        var whereConditions = new List<string>();
         
+        // Handle simple query parameters as WHERE conditions
+        foreach (var kvp in query)
+        {
+            var key = kvp.Key.ToLower();
+            var value = kvp.Value.ToString();
+            
+            // Skip special query parameters
+            if (key == "where" || key == "orderby" || key == "limit" || key == "offset")
+            {
+                continue;
+            }
+            
+            // Sanitize column name (only alphanumeric and underscore)
+            var columnName = Regex.Replace(kvp.Key, @"[^a-zA-Z0-9_]", "");
+            if (string.IsNullOrEmpty(columnName))
+            {
+                continue;
+            }
+            
+            // Add WHERE condition
+            var paramName = $"param_{parameters.Count}";
+            whereConditions.Add($"{columnName} = ${paramName}");
+            parameters[paramName] = value;
+        }
+        
+        // Handle explicit where clause
         if (query.TryGetValue("where", out var whereValue))
         {
-            // Simple where parsing - for full implementation, see RestQuery.cs
-            sql += " WHERE " + whereValue.ToString();
+            whereConditions.Add(whereValue.ToString());
+        }
+        
+        if (whereConditions.Count > 0)
+        {
+            sql += " WHERE " + string.Join(" AND ", whereConditions);
         }
         
         if (query.TryGetValue("orderby", out var orderByValue))

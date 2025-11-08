@@ -33,6 +33,54 @@ public class DatabaseService
         _logger = logger;
         
         logger.LogInformation("Database path: {DbPath}", dbPath);
+        
+        // Initialize database tables
+        InitializeDatabaseAsync().GetAwaiter().GetResult();
+    }
+    
+    private async Task InitializeDatabaseAsync()
+    {
+        try
+        {
+            // Create conversations table
+            // Each row represents a conversation from one user's perspective
+            // currentUserId is the user who sees this conversation
+            // userId is the other user in the conversation
+            await QueryAsync(@"
+                CREATE TABLE IF NOT EXISTS conversations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    currentUserId INTEGER NOT NULL,
+                    userId INTEGER NOT NULL,
+                    userName TEXT,
+                    userFirstName TEXT,
+                    userLastName TEXT,
+                    lastMessage TEXT,
+                    lastMessageTime TEXT,
+                    unread INTEGER DEFAULT 0,
+                    createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            ");
+            
+            // Create messages table
+            await QueryAsync(@"
+                CREATE TABLE IF NOT EXISTS messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    conversationId INTEGER NOT NULL,
+                    senderId INTEGER NOT NULL,
+                    senderName TEXT,
+                    content TEXT NOT NULL,
+                    createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+                    timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (conversationId) REFERENCES conversations(id)
+                )
+            ");
+            
+            _logger.LogInformation("Database tables initialized successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error initializing database tables");
+        }
     }
 
     public async Task<List<Dictionary<string, object?>>> QueryAsync(string sql, Dictionary<string, object?>? parameters = null)
