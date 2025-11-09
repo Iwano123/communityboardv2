@@ -13,11 +13,12 @@
     "postinstall": "npm run install:orchard"
   },
   "dependencies": {
+    "bootstrap": "^5.3.6",
+    "clsx": "^2.1.1",
     "react": "^18.3.1",
+    "react-bootstrap": "^2.10.9",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
-    "react-bootstrap": "^2.10.9",
-    "bootstrap": "^5.3.6",
     "sass": "^1.77.6"
   },
   "devDependencies": {

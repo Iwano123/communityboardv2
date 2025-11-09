@@ -3,6 +3,7 @@ import { useNotifications, type Notification } from "../hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { BellIcon } from "./BellIcon";
 import type { User } from "../interfaces/BulletinBoard";
+import "../../sass/components/notifications-dropdown.scss";
 
 // Simple date formatting function
 function formatDistanceToNow(date: Date): string {
@@ -40,13 +41,12 @@ export const NotificationsDropdown = ({ user }: NotificationsDropdownProps) => {
   };
 
   return (
-    <Dropdown align="end">
+    <Dropdown align="end" className="notifications-dropdown">
       <Dropdown.Toggle
         variant="link"
-        className="position-relative text-decoration-none border-0 p-2"
-        style={{ backgroundColor: 'transparent' }}
+        className="position-relative text-decoration-none border-0"
       >
-        <BellIcon className="fs-5" style={{ width: '24px', height: '24px' }} />
+        <BellIcon style={{ width: '22px', height: '22px' }} />
         {unreadCount > 0 && (
           <Badge
             bg="danger"

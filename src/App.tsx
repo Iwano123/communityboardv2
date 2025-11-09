@@ -63,7 +63,7 @@ export default function App() {
   return (
     <div className="d-flex flex-column min-vh-100">
       <Header user={user} setUser={setUser} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
-      <main className="flex-grow-1" style={{ paddingTop: '80px' }}>
+      <main className="flex-grow-1">
         <Outlet context={[state, setState, user, setUser]} />
       </main>
       <PushNotificationPrompt user={user} />

@@ -34,7 +34,7 @@ const Home = () => {
                 <i className="bi bi-arrow-right ms-2 hero-icon-hover"></i>
               </Button>
             </Link>
-            <Link to="/community">
+            <Link to="/events">
               <Button size="lg" variant="outline" className="hero-btn-outline">
                 Browse Events
                 <i className="bi bi-file-earmark-text ms-2 hero-icon-hover"></i>
