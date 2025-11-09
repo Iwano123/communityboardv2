@@ -2,6 +2,7 @@ import type Route from './interfaces/Route.ts';
 import { createElement } from 'react';
 
 // page components
+import HomePage from './pages/HomePage.tsx';
 import AboutPage from './pages/AboutPage.tsx';
 import NotFoundPage from './pages/NotFoundPage.tsx';
 import OurVisionPage from './pages/OurVisionPage.tsx';
@@ -17,6 +18,7 @@ import ProfilePage from './pages/ProfilePage.tsx';
 import ChatPage from './pages/ChatPage.tsx';
 
 export default [
+  HomePage,
   AboutPage,
   NotFoundPage,
   OurVisionPage,

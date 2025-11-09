@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Navbar, Nav, Container, Button, Alert } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
 import { useOnlineStatus } from '../utils/customHooks';
+import { NotificationsDropdown } from '../components/NotificationsDropdown';
 import routes from '../routes';
 import type { User } from '../interfaces/BulletinBoard';
 
@@ -126,6 +127,9 @@ export default function Header({ user, setUser, isDarkMode, setIsDarkMode }: Hea
 
             {user ? (
               <>
+                {/* Notifications Dropdown */}
+                <NotificationsDropdown user={user} />
+                
                 <Nav.Link as={Link} to="/post/create" className="me-2">
                   <Button
                     variant="primary"

@@ -2,6 +2,8 @@ import { Outlet } from 'react-router-dom';
 import { useStateObject } from './utils/useStateObject';
 import { useEffect, useState } from 'react';
 import Header from './partials/Header';
+import { PushNotificationPrompt } from './components/PushNotificationPrompt';
+import { registerServiceWorker } from './utils/pushNotifications';
 import type { User } from './interfaces/BulletinBoard';
 
 export default function App() {
@@ -53,12 +55,18 @@ export default function App() {
     checkLoginStatus();
   }, []);
 
+  // Register service worker on mount
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
+
   return (
     <div className="d-flex flex-column min-vh-100">
       <Header user={user} setUser={setUser} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
       <main className="flex-grow-1" style={{ paddingTop: '80px' }}>
         <Outlet context={[state, setState, user, setUser]} />
       </main>
+      <PushNotificationPrompt user={user} />
     </div>
   );
 }
