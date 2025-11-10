@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using System.Text.Json;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 
 namespace CommunityBoard.Cms.Services;
 
@@ -54,7 +55,14 @@ public class SessionService
         var data = await GetSessionDataAsync(sessionId) ?? new Dictionary<string, object?>();
         data[key] = value;
 
-        var dataJson = JsonSerializer.Serialize(data);
+        // Use JsonSerializerOptions to handle complex objects properly
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = false,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        };
+        
+        var dataJson = JsonSerializer.Serialize(data, options);
         await _databaseService.QueryAsync(
             @"UPDATE sessions SET modified = DATETIME('now'), data = $data WHERE id = $id",
             new Dictionary<string, object?>
@@ -77,7 +85,18 @@ public class SessionService
         }
 
         sessionId = Guid.NewGuid().ToString();
-        context.Response.Cookies.Append("session", sessionId);
+        
+        // Configure cookie options for CORS and session management
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            SameSite = SameSiteMode.Lax, // Use Lax for localhost, None for cross-origin with Secure=true
+            Secure = false, // Set to true in production with HTTPS
+            MaxAge = TimeSpan.FromDays(30), // Session expires after 30 days
+            Path = "/"
+        };
+        
+        context.Response.Cookies.Append("session", sessionId, cookieOptions);
 
         await _databaseService.QueryAsync(
             "INSERT INTO sessions(id) VALUES($id)",

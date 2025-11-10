@@ -82,10 +82,24 @@ public class LoginController : ControllerBase
             }
             
             var dbPassword = dbUser["password"]?.ToString();
-            if (string.IsNullOrEmpty(dbPassword) || !BCrypt.Net.BCrypt.EnhancedVerify(password, dbPassword))
+            if (string.IsNullOrEmpty(dbPassword))
             {
-                _logger.LogWarning("Login failed: Password mismatch for email: {Email}", email);
-                return StatusCode(500, new { error = "Password mismatch." });
+                _logger.LogWarning("Login failed: No password found for user with email: {Email}", email);
+                return StatusCode(500, new { error = "Invalid user account." });
+            }
+            
+            try
+            {
+                if (!BCrypt.Net.BCrypt.EnhancedVerify(password, dbPassword))
+                {
+                    _logger.LogWarning("Login failed: Password mismatch for email: {Email}", email);
+                    return StatusCode(500, new { error = "Password mismatch." });
+                }
+            }
+            catch (Exception bcryptEx)
+            {
+                _logger.LogError(bcryptEx, "Error verifying password for email: {Email}", email);
+                return StatusCode(500, new { error = "Error verifying password." });
             }
             
             // Remove password from user object
@@ -107,7 +121,16 @@ public class LoginController : ControllerBase
             }
             
             // Store user in session
-            await _sessionService.SetSessionDataAsync(sessionId, "user", dbUser);
+            try
+            {
+                await _sessionService.SetSessionDataAsync(sessionId, "user", dbUser);
+                _logger.LogInformation("User session stored successfully for email: {Email}", email);
+            }
+            catch (Exception sessionEx)
+            {
+                _logger.LogError(sessionEx, "Failed to store user in session for email: {Email}", email);
+                // Continue anyway - the login was successful, session storage failure is logged
+            }
             
             _logger.LogInformation("Login successful for email: {Email}", email);
             return Ok(dbUser);

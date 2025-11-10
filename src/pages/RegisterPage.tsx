@@ -116,11 +116,18 @@ export default function RegisterPage() {
           navigate('/login');
         }
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Registration failed. Please try again.');
+        try {
+          const errorData = await response.json();
+          setError(errorData.error || 'Registration failed. Please try again.');
+        } catch (jsonErr) {
+          // If response is not JSON, show a generic error
+          setError('Registration failed. Please try again.');
+        }
       }
     } catch (err) {
-      setError('Error registering account. Please try again.');
+      // Network error or other exception
+      console.error('Registration error:', err);
+      setError('Unable to connect to server. Please make sure the backend is running and try again.');
     } finally {
       setLoading(false);
     }

@@ -72,7 +72,27 @@ public class ApiController : ControllerBase
         
         if (result.ContainsKey("error"))
         {
-            return BadRequest(result);
+            var errorMessage = result["error"]?.ToString() ?? "An error occurred";
+            
+            // Provide user-friendly error messages for common database errors
+            if (errorMessage.Contains("UNIQUE constraint failed: users.email"))
+            {
+                _logger.LogWarning("Registration attempt with existing email");
+                return BadRequest(new { 
+                    error = "An account with this email address already exists. Please sign in instead or use a different email address." 
+                });
+            }
+            
+            if (errorMessage.Contains("UNIQUE constraint failed"))
+            {
+                _logger.LogWarning("UNIQUE constraint violation: {Error}", errorMessage);
+                return BadRequest(new { 
+                    error = "This record already exists. Please check your input and try again." 
+                });
+            }
+            
+            _logger.LogError("Database error during POST to {Table}: {Error}", table, errorMessage);
+            return BadRequest(new { error = "An error occurred while saving. Please try again." });
         }
         
         // Get the insert id

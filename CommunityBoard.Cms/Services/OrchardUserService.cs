@@ -14,24 +14,50 @@ namespace CommunityBoard.Cms.Services;
 /// </summary>
 public class OrchardUserService
 {
-    private readonly UserManager<IUser> _userManager;
-    private readonly IUserStore<IUser> _userStore;
     private readonly DatabaseService _databaseService;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<OrchardUserService> _logger;
 
     public OrchardUserService(
-        UserManager<IUser> userManager,
-        IUserStore<IUser> userStore,
         DatabaseService databaseService,
         IServiceProvider serviceProvider,
         ILogger<OrchardUserService> logger)
     {
-        _userManager = userManager;
-        _userStore = userStore;
         _databaseService = databaseService;
         _serviceProvider = serviceProvider;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Get UserManager from service provider (lazy loading)
+    /// </summary>
+    private UserManager<IUser>? GetUserManager()
+    {
+        try
+        {
+            return _serviceProvider.GetService<UserManager<IUser>>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "UserManager not available from service provider");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Get IUserStore from service provider (lazy loading)
+    /// </summary>
+    private IUserStore<IUser>? GetUserStore()
+    {
+        try
+        {
+            return _serviceProvider.GetService<IUserStore<IUser>>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "IUserStore not available from service provider");
+            return null;
+        }
     }
 
     /// <summary>
@@ -82,8 +108,22 @@ public class OrchardUserService
     {
         try
         {
+            var userManager = GetUserManager();
+            if (userManager == null)
+            {
+                _logger.LogDebug("UserManager not available - skipping Orchard Core user sync");
+                return null;
+            }
+
+            var userStore = GetUserStore();
+            if (userStore == null)
+            {
+                _logger.LogDebug("IUserStore not available - skipping Orchard Core user sync");
+                return null;
+            }
+
             // Check if user already exists in Orchard Core
-            var existingUser = await _userManager.FindByEmailAsync(email);
+            var existingUser = await userManager.FindByEmailAsync(email);
             
             if (existingUser == null)
             {
@@ -99,11 +139,11 @@ public class OrchardUserService
                 if (user is User orchardUser)
                 {
                     // Store our database user ID in a claim for reference
-                    await _userStore.SetUserNameAsync(user, email, CancellationToken.None);
+                    await userStore.SetUserNameAsync(user, email, CancellationToken.None);
                 }
 
                 // Create user without password (they'll use our existing auth)
-                var result = await _userManager.CreateAsync(user);
+                var result = await userManager.CreateAsync(user);
                 if (!result.Succeeded)
                 {
                     _logger.LogWarning("Failed to create Orchard Core user for {Email}: {Errors}", 
@@ -122,7 +162,7 @@ public class OrchardUserService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error syncing user {UserId} to Orchard Core", userId);
+            _logger.LogWarning(ex, "Error syncing user {UserId} to Orchard Core (non-critical)", userId);
             return null;
         }
     }
@@ -134,24 +174,31 @@ public class OrchardUserService
     {
         try
         {
-            var userEmail = await _userManager.GetEmailAsync(user) ?? "";
+            var userManager = GetUserManager();
+            if (userManager == null)
+            {
+                _logger.LogDebug("UserManager not available - skipping role sync");
+                return;
+            }
+
+            var userEmail = await userManager.GetEmailAsync(user) ?? "";
             
             // Map database roles to Orchard Core roles
             var orchardRole = MapRoleToOrchard(role);
 
             // Get current roles
-            var currentRoles = await _userManager.GetRolesAsync(user);
+            var currentRoles = await userManager.GetRolesAsync(user);
 
             // Remove all current roles
             if (currentRoles.Any())
             {
-                await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                await userManager.RemoveFromRolesAsync(user, currentRoles);
             }
 
             // Add new role
             if (!string.IsNullOrEmpty(orchardRole))
             {
-                var result = await _userManager.AddToRoleAsync(user, orchardRole);
+                var result = await userManager.AddToRoleAsync(user, orchardRole);
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("Assigned role {Role} to user {Email}", orchardRole, userEmail);
@@ -165,8 +212,9 @@ public class OrchardUserService
         }
         catch (Exception ex)
         {
-            var userEmail = await _userManager.GetEmailAsync(user) ?? "";
-            _logger.LogError(ex, "Error syncing role for user {Email}", userEmail);
+            var userManager = GetUserManager();
+            var userEmail = userManager != null ? await userManager.GetEmailAsync(user) ?? "" : "unknown";
+            _logger.LogWarning(ex, "Error syncing role for user {Email} (non-critical)", userEmail);
         }
     }
 
@@ -190,12 +238,17 @@ public class OrchardUserService
     {
         try
         {
-            return await _userManager.GetRolesAsync(user);
+            var userManager = GetUserManager();
+            if (userManager == null)
+            {
+                return new List<string>();
+            }
+            return await userManager.GetRolesAsync(user);
         }
         catch (Exception ex)
         {
             var userEmail = await GetUserEmailAsync(user);
-            _logger.LogError(ex, "Error getting roles for user {Email}", userEmail);
+            _logger.LogWarning(ex, "Error getting roles for user {Email}", userEmail);
             return new List<string>();
         }
     }
@@ -225,11 +278,16 @@ public class OrchardUserService
     {
         try
         {
-            return await _userManager.FindByEmailAsync(email);
+            var userManager = GetUserManager();
+            if (userManager == null)
+            {
+                return null;
+            }
+            return await userManager.FindByEmailAsync(email);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error finding user by email {Email}", email);
+            _logger.LogWarning(ex, "Error finding user by email {Email}", email);
             return null;
         }
     }
@@ -241,7 +299,12 @@ public class OrchardUserService
     {
         try
         {
-            return await _userManager.GetEmailAsync(user) ?? "";
+            var userManager = GetUserManager();
+            if (userManager == null)
+            {
+                return "";
+            }
+            return await userManager.GetEmailAsync(user) ?? "";
         }
         catch
         {
