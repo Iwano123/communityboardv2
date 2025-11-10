@@ -5,9 +5,9 @@ import { useStateContext } from '../utils/useStateObject';
 
 interface PostCardProps {
   id: number;
-  title: string;
+  title?: string;
   content: string;
-  category_name: string;
+  category_name?: string;
   category_color?: string;
   author_id: number;
   author_name: string;
@@ -52,23 +52,37 @@ export default function PostCard({
   const [contactLoading, setContactLoading] = useState(false);
   const [contactError, setContactError] = useState('');
   const [contactSuccess, setContactSuccess] = useState('');
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  // Parse images - support comma-separated URLs or single URL
+  const images = image_url 
+    ? (image_url.includes(',') ? image_url.split(',').map(img => img.trim()) : [image_url])
+    : [];
+
+  // Generate avatar color from email
+  const getAvatarColor = (email: string) => {
+    if (!email) return '#fbbf24'; // Default yellow
+    let hash = 0;
+    for (let i = 0; i < email.length; i++) {
+      hash = email.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash % 360);
+    return `hsl(${hue}, 70%, 50%)`;
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
     
     if (diffInHours < 1) return 'now';
     if (diffInHours < 24) return `${diffInHours}h`;
-    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d`;
+    if (diffInDays === 1) return '1 day ago';
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
     return date.toLocaleDateString();
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price);
   };
 
   // Get current user from context
@@ -85,8 +99,6 @@ export default function PostCard({
     setContactSuccess('');
 
     try {
-      // In a real application, you would send this to your backend
-      // For now, we'll simulate the contact functionality
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       setContactSuccess('Your message has been sent successfully!');
@@ -112,7 +124,7 @@ export default function PostCard({
   const handleContactClick = () => {
     if (user) {
       setContactForm({
-        subject: `Re: ${title}`,
+        subject: title ? `Re: ${title}` : 'Re: Post',
         message: '',
         senderEmail: user.email || '',
         senderName: `${user.firstName} ${user.lastName}`.trim()
@@ -121,144 +133,230 @@ export default function PostCard({
     setShowContactModal(true);
   };
 
+  // Generate user handle from email
+  const userHandle = author_email?.split('@')[0] || `user${author_id}`;
+
   return (
     <>
-      <Card className="card-twitter hover-shadow mb-3">
-        {/* Post Header */}
-        <Card.Header className="border-0 pb-0">
-          <div className="d-flex align-items-center justify-content-between">
-            <div className="d-flex align-items-center">
-              <div
-                className="avatar-twitter me-2"
-                style={{
-                  backgroundColor: category_color || '#1d9bf0'
-                }}
-              >
-                {author_name?.charAt(0)?.toUpperCase() || '?'}
-              </div>
-              <div>
-                <div className="fw-bold small text-twitter-dark">{author_name}</div>
-                <div className="text-twitter-secondary small">@{author_email?.split('@')[0]}</div>
-              </div>
-            </div>
-            <div className="text-twitter-secondary small">
-              {formatDate(created_at)}
-            </div>
-          </div>
-        </Card.Header>
-
-        <Card.Body className="pt-2">
-          {/* Category Badge */}
-          <div className="mb-2">
-            <Badge
-              className="badge-twitter me-1"
+      <Card className="mb-3" style={{ 
+        border: 'none', 
+        borderRadius: '12px',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+        overflow: 'hidden'
+      }}>
+        <Card.Body className="p-0">
+          {/* Header */}
+          <div className="d-flex align-items-center p-3 pb-2">
+            <div
+              className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
               style={{
-                backgroundColor: (category_color || '#1d9bf0') + '20',
-                color: category_color || '#1d9bf0'
+                width: '40px',
+                height: '40px',
+                backgroundColor: getAvatarColor(author_email),
+                fontSize: '18px',
+                flexShrink: 0
               }}
             >
-              {category_name?.replace(/\s*\d+$/, '') || 'Unknown'}
-            </Badge>
-            {!!is_featured && (
-              <Badge className="badge-twitter" style={{ backgroundColor: '#ffd700', color: '#000' }}>
-                ⭐ Featured
-              </Badge>
-            )}
+              {author_name?.charAt(0)?.toUpperCase() || '?'}
+            </div>
+            <div className="ms-2 flex-grow-1">
+              <div className="d-flex align-items-center gap-2">
+                <span className="fw-semibold text-dark" style={{ fontSize: '15px' }}>
+                  {author_name || `User ${userHandle.substring(0, 8)}`}
+                </span>
+                <Badge 
+                  className="rounded-pill" 
+                  style={{ 
+                    backgroundColor: '#e5e7eb',
+                    color: '#6b7280',
+                    fontSize: '11px',
+                    padding: '2px 8px',
+                    fontWeight: 'normal'
+                  }}
+                >
+                  Post
+                </Badge>
+              </div>
+              <div className="text-muted" style={{ fontSize: '13px', marginTop: '2px' }}>
+                {formatDate(created_at)}
+              </div>
+            </div>
           </div>
 
           {/* Post Content */}
-          <div className="mb-3">
-            <h5 className="fw-bold mb-2 text-twitter-dark">
-              <Link to={`/post/${id}`} className="text-decoration-none text-twitter-dark">
-                {title}
-              </Link>
-            </h5>
-            <p className="text-twitter-secondary mb-2" style={{ lineHeight: '1.5' }}>
-              {content.length > 200 ? `${content.substring(0, 200)}...` : content}
-            </p>
-          </div>
-
-          {/* Post Image */}
-          {image_url && (
-            <div className="mb-3">
-              <img
-                src={image_url}
-                alt={title}
-                className="img-fluid rounded"
-                style={{
-                  width: '100%',
-                  height: '200px',
-                  objectFit: 'cover',
-                  cursor: 'pointer',
-                  borderRadius: '12px'
-                }}
-                onClick={() => window.open(image_url, '_blank')}
-              />
+          {content && (
+            <div className="px-3 pb-2">
+              <p className="text-dark mb-0" style={{ fontSize: '15px', lineHeight: '1.5' }}>
+                {content}
+              </p>
             </div>
           )}
 
-          {/* Post Details */}
-          <div className="mb-3">
-            {price && (
-              <div className="d-flex align-items-center mb-1">
-                <span className="text-success fw-bold">{formatPrice(price)}</span>
+          {/* Main Image */}
+          {images.length > 0 && (
+            <div className="px-3 pb-2">
+              <div 
+                className="rounded"
+                style={{
+                  width: '100%',
+                  aspectRatio: '16/9',
+                  overflow: 'hidden',
+                  backgroundColor: '#f3f4f6',
+                  cursor: 'pointer'
+                }}
+                onClick={() => images[selectedImageIndex] && window.open(images[selectedImageIndex], '_blank')}
+              >
+                <img
+                  src={images[selectedImageIndex]}
+                  alt={title || content.substring(0, 50)}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x450?text=Image+Not+Available';
+                  }}
+                />
               </div>
-            )}
-            {location && (
-              <div className="d-flex align-items-center mb-1">
-                <span className="text-twitter-secondary small">📍 {location}</span>
-              </div>
-            )}
-            <div className="d-flex align-items-center">
-              <span className="text-twitter-secondary small">👁️ {views} views</span>
-              {comments_count > 0 && (
-                <span className="text-twitter-secondary small ms-3">💬 {comments_count} comments</span>
+
+              {/* Thumbnail Carousel */}
+              {images.length > 1 && (
+                <div className="d-flex gap-2 mt-2" style={{ overflowX: 'auto', paddingBottom: '4px' }}>
+                  {images.map((img, index) => (
+                    <div
+                      key={index}
+                      className="rounded"
+                      style={{
+                        width: '80px',
+                        height: '60px',
+                        flexShrink: 0,
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        border: selectedImageIndex === index ? '2px solid #1d9bf0' : '2px solid transparent',
+                        backgroundColor: '#f3f4f6'
+                      }}
+                      onClick={() => setSelectedImageIndex(index)}
+                    >
+                      <img
+                        src={img}
+                        alt={`Thumbnail ${index + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/80x60?text=Error';
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
-          </div>
+          )}
 
-          {/* Action Buttons - Twitter-like */}
-          <div className="d-flex justify-content-between align-items-center border-top pt-3">
-            <div className="d-flex align-items-center">
-              <Link to={`/post/${id}`}>
-                <Button
-                  variant="outline-light"
-                  size="sm"
-                  className="me-3 text-twitter-secondary border-0 btn-twitter-outline"
-                  style={{ fontSize: '14px', padding: '4px 8px' }}
-                >
-                  💬 Reply
-                </Button>
+          {/* Price and Location (if applicable) */}
+          {(price || location) && (
+            <div className="px-3 pb-2">
+              {price && (
+                <div className="mb-1">
+                  <span className="text-success fw-bold" style={{ fontSize: '16px' }}>
+                    ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+              {location && (
+                <div className="text-muted small">
+                  📍 {location}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Interaction Bar */}
+          <div 
+            className="d-flex align-items-center justify-content-between px-3 py-2 border-top"
+            style={{ borderColor: '#e5e7eb' }}
+          >
+            <div className="d-flex align-items-center gap-4">
+              {/* Like Button */}
+              <button
+                className="btn btn-link p-0 text-decoration-none d-flex align-items-center gap-1"
+                style={{ 
+                  border: 'none',
+                  background: 'none',
+                  color: '#6b7280',
+                  fontSize: '14px'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#6b7280'}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                <span>0</span>
+              </button>
+
+              {/* Reply Button */}
+              <Link 
+                to={`/post/${id}`}
+                className="text-decoration-none d-flex align-items-center gap-1"
+                style={{ color: '#6b7280', fontSize: '14px' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#1d9bf0'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#6b7280'}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Reply</span>
               </Link>
-              <Button
-                variant="outline-light"
-                size="sm"
-                className="me-3 text-twitter-secondary border-0 btn-twitter-outline"
-                style={{ fontSize: '14px', padding: '4px 8px' }}
-                onClick={handleContactClick}
-                disabled={isAuthor}
+
+              {/* Share Button */}
+              <button
+                className="btn btn-link p-0 text-decoration-none d-flex align-items-center gap-1"
+                style={{ 
+                  border: 'none',
+                  background: 'none',
+                  color: '#6b7280',
+                  fontSize: '14px'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#1d9bf0'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#6b7280'}
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({
+                      title: title || 'Post',
+                      text: content,
+                      url: window.location.href
+                    });
+                  } else {
+                    navigator.clipboard.writeText(window.location.href);
+                    alert('Link copied to clipboard!');
+                  }
+                }}
               >
-                📧 Contact
-              </Button>
-              <Button
-                variant="outline-light"
-                size="sm"
-                className="text-twitter-secondary border-0 btn-twitter-outline"
-                style={{ fontSize: '14px', padding: '4px 8px' }}
-              >
-                🔄 Share
-              </Button>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                <span>Share</span>
+              </button>
             </div>
 
             {/* Edit/Delete buttons for author or admin */}
             {(isAuthor || isAdmin) && (
-              <div className="d-flex">
+              <div className="d-flex gap-2">
                 {isAuthor && (
                   <Button
                     variant="outline-primary"
                     size="sm"
-                    className="me-2 btn-twitter-outline"
                     onClick={() => onEdit?.(id)}
+                    style={{ fontSize: '12px' }}
                   >
                     Edit
                   </Button>
@@ -267,9 +365,8 @@ export default function PostCard({
                   <Button
                     variant="outline-danger"
                     size="sm"
-                    className="btn-twitter-outline"
-                    style={{ borderColor: '#dc3545', color: '#dc3545' }}
                     onClick={() => onDelete?.(id)}
+                    style={{ fontSize: '12px' }}
                   >
                     Delete
                   </Button>
@@ -277,15 +374,6 @@ export default function PostCard({
               </div>
             )}
           </div>
-
-          {/* Contact Info */}
-          {author_email && (
-            <div className="mt-3 pt-3 border-top">
-              <small className="text-twitter-secondary">
-                📧 Contact: {author_email}
-              </small>
-            </div>
-          )}
         </Card.Body>
       </Card>
 
@@ -296,7 +384,7 @@ export default function PostCard({
         </Modal.Header>
         <Modal.Body>
           <p className="text-muted mb-3">
-            Send a message to <strong>{author_name}</strong> about their post: <em>"{title}"</em>
+            Send a message to <strong>{author_name}</strong> about their post: <em>"{title || 'Post'}"</em>
           </p>
           
           {contactSuccess && (
