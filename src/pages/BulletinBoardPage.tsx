@@ -9,8 +9,8 @@ import { useState, useEffect } from 'react';
 import type { Post, Category, User } from '../interfaces/BulletinBoard';
 
 BulletinBoardPage.route = {
-  index: true,
-  menuLabel: 'Home',
+  path: '/community',
+  menuLabel: 'Community',
   parent: '/',
   loader: postsLoader
 };

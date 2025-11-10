@@ -4,9 +4,9 @@ import { useOutletContext } from 'react-router-dom';
 import type { User } from '../interfaces/BulletinBoard';
 
 ChatPage.route = {
-  path: '/chat',
-  menuLabel: 'Messages',
-  parent: '/'
+  path: "/messages",
+  menuLabel: "Messages",
+  parent: "/",
 };
 
 interface Conversation {

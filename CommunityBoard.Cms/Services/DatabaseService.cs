@@ -75,6 +75,40 @@ public class DatabaseService
                 )
             ");
             
+            // Create push_subscriptions table
+            await QueryAsync(@"
+                CREATE TABLE IF NOT EXISTS push_subscriptions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    endpoint TEXT NOT NULL UNIQUE,
+                    p256dh TEXT NOT NULL,
+                    auth TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ");
+            
+            // Create notifications table
+            await QueryAsync(@"
+                CREATE TABLE IF NOT EXISTS notifications (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    type TEXT NOT NULL DEFAULT 'general',
+                    title TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    link TEXT,
+                    read INTEGER NOT NULL DEFAULT 0,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ");
+            
+            // Create indexes for better performance
+            await QueryAsync("CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id ON push_subscriptions(user_id)");
+            await QueryAsync("CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)");
+            await QueryAsync("CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read)");
+            await QueryAsync("CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at)");
+            
             _logger.LogInformation("Database tables initialized successfully");
         }
         catch (Exception ex)

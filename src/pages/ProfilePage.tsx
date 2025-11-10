@@ -117,10 +117,10 @@ export default function ProfilePage() {
       <Container className="mt-4">
         <Row>
           <Col lg={8} className="mx-auto">
-            <Card>
-              <Card.Body className="text-center">
-                <h1 className="card-title">Please Log In</h1>
-                <p className="card-text">You need to be logged in to view your profile.</p>
+            <Card className="card-twitter">
+              <Card.Body className="text-center twitter-spacing">
+                <h1 className="card-title text-twitter-dark">Please Log In</h1>
+                <p className="card-text text-twitter-secondary">You need to be logged in to view your profile.</p>
                 <Button variant="primary" href="/login">Go to Login</Button>
               </Card.Body>
             </Card>
@@ -135,8 +135,8 @@ export default function ProfilePage() {
       <Row>
         <Col lg={10} className="mx-auto">
           {/* Profile Header */}
-          <Card className="mb-4">
-            <Card.Body>
+          <Card className="card-twitter mb-4">
+            <Card.Body className="twitter-spacing">
               <Row className="align-items-center">
                 <Col md={3} className="text-center">
                   <div 
@@ -157,22 +157,23 @@ export default function ProfilePage() {
                   </div>
                 </Col>
                 <Col md={9}>
-                  <h1 className="mb-2">
+                  <h1 className="mb-2 text-twitter-dark">
                     {user.firstName} {user.lastName}
                     {user.role === 'admin' && (
                       <Badge bg="danger" className="ms-2">Admin</Badge>
                     )}
                   </h1>
-                  <p className="text-muted mb-2">
+                  <p className="text-twitter-secondary mb-2">
                     <i className="bi bi-envelope me-2"></i>
                     {user.email}
                   </p>
-                  <p className="text-muted mb-3">
+                  <p className="text-twitter-secondary mb-3">
                     <i className="bi bi-calendar me-2"></i>
                     Member since {new Date(user.created).toLocaleDateString()}
                   </p>
                   <Button 
                     variant="outline-primary" 
+                    className="btn-twitter-outline"
                     onClick={() => setIsEditing(true)}
                     disabled={isEditing}
                   >
@@ -189,49 +190,49 @@ export default function ProfilePage() {
             <Tab eventKey="overview" title="Overview">
               <Row>
                 <Col lg={6}>
-                  <Card>
+                  <Card className="card-twitter">
                     <Card.Header>
-                      <h5 className="mb-0">Profile Information</h5>
+                      <h5 className="mb-0 text-twitter-dark">Profile Information</h5>
                     </Card.Header>
-                    <Card.Body>
+                    <Card.Body className="twitter-spacing">
                       <div className="mb-3">
-                        <strong>First Name:</strong> {user.firstName}
+                        <strong className="text-twitter-dark">First Name:</strong> <span className="text-twitter-secondary">{user.firstName}</span>
                       </div>
                       <div className="mb-3">
-                        <strong>Last Name:</strong> {user.lastName}
+                        <strong className="text-twitter-dark">Last Name:</strong> <span className="text-twitter-secondary">{user.lastName}</span>
                       </div>
                       <div className="mb-3">
-                        <strong>Email:</strong> {user.email}
+                        <strong className="text-twitter-dark">Email:</strong> <span className="text-twitter-secondary">{user.email}</span>
                       </div>
                       <div className="mb-3">
-                        <strong>Role:</strong> 
+                        <strong className="text-twitter-dark">Role:</strong> 
                         <Badge bg={user.role === 'admin' ? 'danger' : 'primary'} className="ms-2">
                           {user.role}
                         </Badge>
                       </div>
                       <div className="mb-3">
-                        <strong>Member Since:</strong> {new Date(user.created).toLocaleDateString()}
+                        <strong className="text-twitter-dark">Member Since:</strong> <span className="text-twitter-secondary">{new Date(user.created).toLocaleDateString()}</span>
                       </div>
                     </Card.Body>
                   </Card>
                 </Col>
                 <Col lg={6}>
-                  <Card>
+                  <Card className="card-twitter">
                     <Card.Header>
-                      <h5 className="mb-0">Activity Summary</h5>
+                      <h5 className="mb-0 text-twitter-dark">Activity Summary</h5>
                     </Card.Header>
-                    <Card.Body>
+                    <Card.Body className="twitter-spacing">
                       <div className="mb-3">
-                        <strong>Total Posts:</strong> {userPosts.length}
+                        <strong className="text-twitter-dark">Total Posts:</strong> <span className="text-twitter-secondary">{userPosts.length}</span>
                       </div>
                       <div className="mb-3">
-                        <strong>Featured Posts:</strong> {userPosts.filter(post => post.is_featured).length}
+                        <strong className="text-twitter-dark">Featured Posts:</strong> <span className="text-twitter-secondary">{userPosts.filter(post => post.is_featured).length}</span>
                       </div>
                       <div className="mb-3">
-                        <strong>Total Views:</strong> {userPosts.reduce((sum, post) => sum + post.views, 0)}
+                        <strong className="text-twitter-dark">Total Views:</strong> <span className="text-twitter-secondary">{userPosts.reduce((sum, post) => sum + post.views, 0)}</span>
                       </div>
                       <div className="mb-3">
-                        <strong>Total Comments:</strong> {userPosts.reduce((sum, post) => sum + post.comments_count, 0)}
+                        <strong className="text-twitter-dark">Total Comments:</strong> <span className="text-twitter-secondary">{userPosts.reduce((sum, post) => sum + post.comments_count, 0)}</span>
                       </div>
                     </Card.Body>
                   </Card>
@@ -240,14 +241,14 @@ export default function ProfilePage() {
             </Tab>
 
             <Tab eventKey="posts" title={`My Posts (${userPosts.length})`}>
-              <Card>
+              <Card className="card-twitter">
                 <Card.Header>
-                  <h5 className="mb-0">Your Posts</h5>
+                  <h5 className="mb-0 text-twitter-dark">Your Posts</h5>
                 </Card.Header>
-                <Card.Body>
+                <Card.Body className="twitter-spacing">
                   {userPosts.length === 0 ? (
                     <div className="text-center py-4">
-                      <p className="text-muted">You haven't created any posts yet.</p>
+                      <p className="text-twitter-secondary">You haven't created any posts yet.</p>
                       <Button variant="primary" href="/create-post">
                         Create Your First Post
                       </Button>
@@ -256,27 +257,27 @@ export default function ProfilePage() {
                     <div className="row">
                       {userPosts.map((post) => (
                         <div key={post.id} className="col-md-6 mb-3">
-                          <Card className="h-100">
-                            <Card.Body>
+                          <Card className="card-twitter h-100">
+                            <Card.Body className="twitter-spacing">
                               <div className="d-flex justify-content-between align-items-start mb-2">
-                                <h6 className="card-title mb-0">{post.title}</h6>
+                                <h6 className="card-title mb-0 text-twitter-dark">{post.title}</h6>
                                 {post.is_featured && (
                                   <Badge bg="warning">Featured</Badge>
                                 )}
                               </div>
-                              <p className="card-text small text-muted mb-2">
+                              <p className="card-text small text-twitter-secondary mb-2">
                                 {post.content.substring(0, 100)}...
                               </p>
                               <div className="d-flex justify-content-between align-items-center">
-                                <small className="text-muted">
+                                <small className="text-twitter-secondary">
                                   {new Date(post.created_at).toLocaleDateString()}
                                 </small>
                                 <div className="d-flex gap-2">
-                                  <span className="small text-muted">
+                                  <span className="small text-twitter-secondary">
                                     <i className="bi bi-eye me-1"></i>
                                     {post.views}
                                   </span>
-                                  <span className="small text-muted">
+                                  <span className="small text-twitter-secondary">
                                     <i className="bi bi-chat me-1"></i>
                                     {post.comments_count}
                                   </span>
@@ -295,11 +296,11 @@ export default function ProfilePage() {
 
           {/* Edit Profile Modal */}
           {isEditing && (
-            <Card className="mt-4">
+            <Card className="card-twitter mt-4">
               <Card.Header>
-                <h5 className="mb-0">Edit Profile</h5>
+                <h5 className="mb-0 text-twitter-dark">Edit Profile</h5>
               </Card.Header>
-              <Card.Body>
+              <Card.Body className="twitter-spacing">
                 {error && <Alert variant="danger">{error}</Alert>}
                 {success && <Alert variant="success">{success}</Alert>}
                 
@@ -307,24 +308,26 @@ export default function ProfilePage() {
                   <Row>
                     <Col md={6}>
                       <Form.Group className="mb-3">
-                        <Form.Label>First Name</Form.Label>
+                        <Form.Label className="text-twitter-dark">First Name</Form.Label>
                         <Form.Control
                           type="text"
                           name="firstName"
                           value={formData.firstName}
                           onChange={handleInputChange}
+                          className="form-control-twitter"
                           required
                         />
                       </Form.Group>
                     </Col>
                     <Col md={6}>
                       <Form.Group className="mb-3">
-                        <Form.Label>Last Name</Form.Label>
+                        <Form.Label className="text-twitter-dark">Last Name</Form.Label>
                         <Form.Control
                           type="text"
                           name="lastName"
                           value={formData.lastName}
                           onChange={handleInputChange}
+                          className="form-control-twitter"
                           required
                         />
                       </Form.Group>
@@ -332,12 +335,13 @@ export default function ProfilePage() {
                   </Row>
                   
                   <Form.Group className="mb-3">
-                    <Form.Label>Email</Form.Label>
+                    <Form.Label className="text-twitter-dark">Email</Form.Label>
                     <Form.Control
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
+                      className="form-control-twitter"
                       required
                     />
                   </Form.Group>
@@ -352,6 +356,7 @@ export default function ProfilePage() {
                     </Button>
                     <Button 
                       variant="outline-secondary" 
+                      className="btn-twitter-outline"
                       onClick={handleCancel}
                       disabled={loading}
                     >

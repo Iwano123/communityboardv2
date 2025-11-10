@@ -6,18 +6,19 @@
 backend/_db.sqlite3
 
 # Do not git control build related .NET folders
-backend/obj
-backend/bin
+backend/obj/
+backend/bin/
 CommunityBoard.Cms/bin/
 CommunityBoard.Cms/obj/
 CommunityBoard.Cms/App_Data/
+
 # Explicitly ignore the database file
 *.db
 *.db-shm
 *.db-wal
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -25,15 +26,18 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# OrchardCore localization files (get modified when site runs)
+CommunityBoard.Cms/Localization/**/*.po
+
+node_modules/
+dist/
+dist-ssr/
 *.local
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
@@ -42,7 +46,12 @@ dist-ssr
 *.sw?
 
 .vs/
-bin/
-obj/
+**/bin/
+**/obj/
 *.user
 *.suo
+
+# Environment files
+.env
+.env.local
+.env.*.local
