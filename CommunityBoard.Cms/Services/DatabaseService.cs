@@ -126,12 +126,43 @@ public class DatabaseService
                 )
             ");
             
+            // Create likes/reactions table for social media interactions
+            await QueryAsync(@"
+                CREATE TABLE IF NOT EXISTS likes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    post_id INTEGER NOT NULL,
+                    created_at TEXT DEFAULT (datetime('now')),
+                    UNIQUE(user_id, post_id),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+                )
+            ");
+            
+            // Create followers/following table for social connections
+            await QueryAsync(@"
+                CREATE TABLE IF NOT EXISTS follows (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    follower_id INTEGER NOT NULL,
+                    following_id INTEGER NOT NULL,
+                    created_at TEXT DEFAULT (datetime('now')),
+                    UNIQUE(follower_id, following_id),
+                    FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE,
+                    CHECK(follower_id != following_id)
+                )
+            ");
+            
             // Create indexes for better performance
             await QueryAsync("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)");
             await QueryAsync("CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id ON push_subscriptions(user_id)");
             await QueryAsync("CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)");
             await QueryAsync("CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read)");
             await QueryAsync("CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at)");
+            await QueryAsync("CREATE INDEX IF NOT EXISTS idx_likes_user_id ON likes(user_id)");
+            await QueryAsync("CREATE INDEX IF NOT EXISTS idx_likes_post_id ON likes(post_id)");
+            await QueryAsync("CREATE INDEX IF NOT EXISTS idx_follows_follower_id ON follows(follower_id)");
+            await QueryAsync("CREATE INDEX IF NOT EXISTS idx_follows_following_id ON follows(following_id)");
             
             _logger.LogInformation("Database tables initialized successfully");
         }

@@ -11,15 +11,18 @@ public class LoginController : ControllerBase
 {
     private readonly DatabaseService _databaseService;
     private readonly SessionService _sessionService;
+    private readonly OrchardUserService _orchardUserService;
     private readonly ILogger<LoginController> _logger;
 
     public LoginController(
         DatabaseService databaseService,
         SessionService sessionService,
+        OrchardUserService orchardUserService,
         ILogger<LoginController> logger)
     {
         _databaseService = databaseService;
         _sessionService = sessionService;
+        _orchardUserService = orchardUserService;
         _logger = logger;
     }
 
@@ -87,6 +90,21 @@ public class LoginController : ControllerBase
             
             // Remove password from user object
             dbUser.Remove("password");
+            
+            // Sync user to Orchard Core for role management
+            var userId = Convert.ToInt32(dbUser["id"]);
+            var firstName = dbUser["firstName"]?.ToString() ?? "";
+            var lastName = dbUser["lastName"]?.ToString() ?? "";
+            var role = dbUser["role"]?.ToString() ?? "user";
+            
+            try
+            {
+                await _orchardUserService.SyncUserFromDatabaseAsync(userId, email, firstName, lastName, role);
+            }
+            catch (Exception syncEx)
+            {
+                _logger.LogWarning(syncEx, "Failed to sync user to Orchard Core, continuing with login");
+            }
             
             // Store user in session
             await _sessionService.SetSessionDataAsync(sessionId, "user", dbUser);

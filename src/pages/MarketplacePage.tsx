@@ -1,4 +1,5 @@
-import { Container } from "react-bootstrap";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 MarketplacePage.route = {
   path: "/marketplace",
@@ -6,12 +7,14 @@ MarketplacePage.route = {
   parent: "/",
 };
 
+// Redirect to community page with for-sale filter
 export default function MarketplacePage() {
-  return (
-    <Container className="mt-5">
-      <h1>Marketplace</h1>
-      <p>Buy and sell items in the community marketplace.</p>
-    </Container>
-  );
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    navigate('/community?tab=for-sale', { replace: true });
+  }, [navigate]);
+  
+  return null;
 }
 

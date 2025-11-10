@@ -13,9 +13,7 @@ export function Navigation({ user }: NavigationProps) {
     <nav className="navigation">
       <NavLink to="/" icon="bi-house-door">Home</NavLink>
       <NavLink to="/for-you" icon="bi-stars"><span style={{ whiteSpace: 'nowrap' }}>For You</span></NavLink>
-      <NavLink to="/community" icon="bi-people">Community</NavLink>
       <NavLink to="/events" icon="bi-calendar">Events</NavLink>
-      <NavLink to="/marketplace" icon="bi-bag">Marketplace</NavLink>
       <NavLink to="/messages" icon="bi-chat-square">Messages</NavLink>
       <NavLink to="/profile" icon="bi-person">Profile</NavLink>
       {isAdmin && <NavLink to="/admin" icon="bi-shield-check">Admin</NavLink>}

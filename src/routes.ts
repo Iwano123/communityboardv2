@@ -19,6 +19,7 @@ import ChatPage from './pages/ChatPage.tsx';
 import ForYouPage from './pages/ForYouPage.tsx';
 import EventsPage from './pages/EventsPage.tsx';
 import MarketplacePage from './pages/MarketplacePage.tsx';
+import CommunityFeedPage from './pages/CommunityFeedPage.tsx';
 
 export default [
   HomePage,
@@ -37,7 +38,8 @@ export default [
   ChatPage,
   ForYouPage,
   EventsPage,
-  MarketplacePage
+  MarketplacePage,
+  CommunityFeedPage
 ]
   // map the route property of each page component to a Route
   .map(x => {

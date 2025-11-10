@@ -24,6 +24,7 @@ builder.Configuration["DatabasePath"] = dbPath;
 // Register services
 builder.Services.AddScoped<DatabaseService>();
 builder.Services.AddScoped<SessionService>();
+builder.Services.AddScoped<OrchardUserService>();
 
 // Add controllers
 builder.Services.AddControllers();
@@ -40,13 +41,18 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Configure Orchard Core CMS
 builder.Services
     .AddOrchardCms()
-    // // Orchard Specific Pipeline
-    // .ConfigureServices( services => {
-    // })
-    // .Configure( (app, routes, services) => {
-    // })
+    .ConfigureServices(services =>
+    {
+        // Orchard Core is already configured with AddOrchardCms()
+        // Additional module configuration can be added here if needed
+    })
+    .Configure((app, routes, services) =>
+    {
+        // Orchard Core middleware is configured via UseOrchardCore()
+    })
 ;
 
 var app = builder.Build();
@@ -87,12 +93,14 @@ app.UseStaticFiles(staticFileOptions);
 
 app.UseOrchardCore();
 
-// Map fallback to index.html for SPA routing - after Orchard Core
+// Map fallback to index.html for SPA routing
+// Orchard Core will handle /Admin routes before this fallback is reached
 app.MapFallbackToFile("index.html", staticFileOptions);
 
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Application starting...");
 logger.LogInformation("Frontend path: {FrontendPath}", frontendPath);
 logger.LogInformation("Database path: {DbPath}", dbPath);
+logger.LogInformation("To initialize Orchard Core roles, call: POST /api/roles/initialize (requires admin login)");
 
 app.Run();
