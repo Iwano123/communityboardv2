@@ -42,6 +42,19 @@ public class DatabaseService
     {
         try
         {
+            // Create users table (must be created first as other tables reference it)
+            await QueryAsync(@"
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    firstName TEXT NOT NULL,
+                    lastName TEXT NOT NULL,
+                    email TEXT NOT NULL UNIQUE,
+                    password TEXT NOT NULL,
+                    role TEXT NOT NULL DEFAULT 'user',
+                    created TEXT DEFAULT (datetime('now'))
+                )
+            ");
+            
             // Create conversations table
             // Each row represents a conversation from one user's perspective
             // currentUserId is the user who sees this conversation
@@ -103,7 +116,18 @@ public class DatabaseService
                 )
             ");
             
+            // Create sessions table
+            await QueryAsync(@"
+                CREATE TABLE IF NOT EXISTS sessions (
+                    id TEXT PRIMARY KEY,
+                    data TEXT DEFAULT '{}',
+                    created TEXT DEFAULT (datetime('now')),
+                    modified TEXT DEFAULT (datetime('now'))
+                )
+            ");
+            
             // Create indexes for better performance
+            await QueryAsync("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)");
             await QueryAsync("CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id ON push_subscriptions(user_id)");
             await QueryAsync("CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)");
             await QueryAsync("CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read)");
