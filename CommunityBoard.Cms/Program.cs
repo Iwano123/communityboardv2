@@ -21,10 +21,60 @@ else if (!Path.IsPathRooted(dbPath))
 
 builder.Configuration["DatabasePath"] = dbPath;
 
+// Ensure App_Data directory exists for Orchard Core
+var appDataPath = Path.Combine(builder.Environment.ContentRootPath, "App_Data");
+if (!Directory.Exists(appDataPath))
+{
+    Directory.CreateDirectory(appDataPath);
+}
+
+// Ensure Orchard Core database directory exists
+var orchardDbPath = Path.Combine(appDataPath, "Sites", "Default");
+if (!Directory.Exists(orchardDbPath))
+{
+    Directory.CreateDirectory(orchardDbPath);
+}
+
+// Update Orchard Core connection string to use absolute path
+var orchardConnectionString = Path.Combine(orchardDbPath, "OrchardCore.db");
+builder.Configuration["OrchardCore:ConnectionString"] = $"Data Source={orchardConnectionString}";
+
+// Check if Orchard Core database is initialized
+// If the database file exists but doesn't have the Document table, reset tenant state
+var tenantsJsonPath = Path.Combine(appDataPath, "tenants.json");
+if (File.Exists(orchardConnectionString) && File.Exists(tenantsJsonPath))
+{
+    try
+    {
+        using var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={orchardConnectionString}");
+        connection.Open();
+        var command = connection.CreateCommand();
+        command.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='Orchard__Document'";
+        var tableExists = command.ExecuteScalar() != null;
+        connection.Close();
+
+        // If database exists but Document table doesn't, reset tenant to Uninitialized
+        if (!tableExists)
+        {
+            var tenantsJsonText = File.ReadAllText(tenantsJsonPath);
+            // Simple string replacement to set state to Uninitialized
+            if (tenantsJsonText.Contains("\"State\": \"Running\""))
+            {
+                tenantsJsonText = tenantsJsonText.Replace("\"State\": \"Running\"", "\"State\": \"Uninitialized\"");
+                File.WriteAllText(tenantsJsonPath, tenantsJsonText);
+            }
+        }
+    }
+    catch
+    {
+        // If we can't check, continue - Orchard Core will handle it
+    }
+}
+
 // Register services
 builder.Services.AddScoped<DatabaseService>();
 builder.Services.AddScoped<SessionService>();
-builder.Services.AddScoped<OrchardUserService>();
+// OrchardUserService will be registered after Orchard Core is configured
 
 // Add controllers
 builder.Services.AddControllers();
@@ -46,8 +96,8 @@ builder.Services
     .AddOrchardCms()
     .ConfigureServices(services =>
     {
-        // Orchard Core is already configured with AddOrchardCms()
-        // Additional module configuration can be added here if needed
+        // Register OrchardUserService after Orchard Core services are available
+        services.AddScoped<OrchardUserService>();
     })
     .Configure((app, routes, services) =>
     {
