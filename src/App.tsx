@@ -1,72 +1,58 @@
-import { Outlet } from 'react-router-dom';
-import { useStateObject } from './utils/useStateObject';
-import { useEffect, useState } from 'react';
-import Header from './partials/Header';
-import { PushNotificationPrompt } from './components/PushNotificationPrompt';
-import { registerServiceWorker } from './utils/pushNotifications';
-import type { User } from './interfaces/BulletinBoard';
+import { useState, useEffect } from 'react';
+import Login from './components/Login';
+import FileUpload from './components/FileUpload';
+import { checkAuth, logout } from './utils/auth';
+import './App.css';
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Check localStorage for saved theme preference
-    const savedTheme = localStorage.getItem('darkMode');
-    return savedTheme === 'true';
-  });
-  
-  const [state, setState] = useStateObject({
-    categoryChoice: 'All',
-    sortChoice: 'Newest first',
-    searchTerm: '',
-    showOnlyMyPosts: false
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+  const [username, setUsername] = useState('');
 
-  // Apply dark mode class to document
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.setAttribute('data-bs-theme', 'dark');
-    } else {
-      document.documentElement.setAttribute('data-bs-theme', 'light');
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    setIsChecking(true);
+    const result = await checkAuth();
+    setIsAuthenticated(result.isAuthenticated);
+    if (result.user) {
+      setUsername(result.user.username);
     }
-    // Save preference to localStorage
-    localStorage.setItem('darkMode', isDarkMode.toString());
-  }, [isDarkMode]);
+    setIsChecking(false);
+  };
 
-  // Check login status on mount
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        const response = await fetch('/api/login', {
-          credentials: 'include'
-        });
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        } else {
-          // 500 status with "No user is logged in" is expected when not logged in
-          setUser(null);
-        }
-      } catch (error) {
-        // Network error - user not logged in
-        setUser(null);
-      }
-    };
+  const handleLoginSuccess = async () => {
+    await checkAuthStatus();
+  };
 
-    checkLoginStatus();
-  }, []);
+  const handleLogout = async () => {
+    await logout();
+    setIsAuthenticated(false);
+    setUsername('');
+  };
 
-  // Register service worker on mount
-  useEffect(() => {
-    registerServiceWorker();
-  }, []);
+  if (isChecking) {
+    return (
+      <div className="loading">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="d-flex flex-column min-vh-100">
-      <Header user={user} setUser={setUser} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
-      <main className="flex-grow-1">
-        <Outlet context={[state, setState, user, setUser]} />
-      </main>
-      <PushNotificationPrompt user={user} />
-    </div>
+    <>
+      {isAuthenticated && (
+        <div className="logout-bar">
+          Logged in as: <strong>{username}</strong> |{' '}
+          <button onClick={handleLogout} className="logout-button">
+            Logout
+          </button>
+        </div>
+      )}
+
+      {isAuthenticated ? <FileUpload /> : <Login onLoginSuccess={handleLoginSuccess} />}
+    </>
   );
 }
