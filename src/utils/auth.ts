@@ -1,6 +1,8 @@
 export async function checkAuth() {
   try {
-    const response = await fetch('/api/auth/login');
+    const response = await fetch('/api/auth/login', {
+      credentials: 'include',
+    });
 
     if (response.ok) {
       const data = await response.json();
@@ -16,7 +18,8 @@ export async function checkAuth() {
 export async function logout() {
   try {
     await fetch('/api/auth/login', {
-      method: 'DELETE'
+      method: 'DELETE',
+      credentials: 'include',
     });
     return true;
   } catch {
