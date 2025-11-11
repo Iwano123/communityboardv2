@@ -4,6 +4,7 @@ import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import CommunityPage from './pages/CommunityPage';
+import MessagesPage from './pages/MessagesPage';
 import './App.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -83,10 +84,7 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Header />
-            <div className="page-container">
-              <h1>Messages</h1>
-              <p>Messages coming soon...</p>
-            </div>
+            <MessagesPage />
           </ProtectedRoute>
         }
       />

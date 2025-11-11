@@ -164,3 +164,39 @@ export const marketplaceApi = {
     apiRequest<{ message: string }>(`/MarketplaceItem/${id}`, { method: 'DELETE' }),
 };
 
+// Chat API
+export const chatApi = {
+  getAll: (params?: { where?: string; orderby?: string; limit?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.where) query.append('where', params.where);
+    if (params?.orderby) query.append('orderby', params.orderby);
+    if (params?.limit) query.append('limit', params.limit.toString());
+    
+    const queryString = query.toString();
+    return apiRequest<any[]>(`/Chat${queryString ? `?${queryString}` : ''}`);
+  },
+
+  getByChatRoom: (chatRoomId: string) =>
+    apiRequest<any[]>(`/Chat?where=chatRoomId=${chatRoomId}&orderby=createdDate`),
+
+  getByUser: (userId: string) =>
+    apiRequest<any[]>(`/Chat?where=senderId=${userId} OR receiverId=${userId}&orderby=-createdDate`),
+
+  create: (chat: {
+    title: string;
+    message: string;
+    senderId: string;
+    receiverId: string;
+    chatRoomId: string;
+    isRead?: boolean;
+  }) => apiRequest<any>('/Chat', { method: 'POST', body: chat }),
+
+  update: (id: string, chat: Partial<any>) =>
+    apiRequest<any>(`/Chat/${id}`, { method: 'PUT', body: chat }),
+
+  markAsRead: (id: string) =>
+    apiRequest<any>(`/Chat/${id}`, { method: 'PUT', body: { isRead: true } }),
+
+  delete: (id: string) =>
+    apiRequest<{ message: string }>(`/Chat/${id}`, { method: 'DELETE' }),
+};
