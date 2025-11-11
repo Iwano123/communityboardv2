@@ -1,113 +1,80 @@
-import { useAuth } from '../contexts/AuthContext';
-import { useEffect, useState } from 'react';
-import './HomePage.css';
+import { Button, Card, Container } from "react-bootstrap";
+import { Link } from "react-router-dom";
 
-interface Stats {
-  members: number;
-  posts: number;
-  events: number;
-  growth: number;
-}
-
-export default function HomePage() {
-  const { isAuthenticated, hasRole } = useAuth();
-  const [stats, setStats] = useState<Stats>({
-    members: 2400,
-    posts: 156,
-    events: 24,
-    growth: 89,
-  });
-
-  useEffect(() => {
-    // Hämta statistik från API
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      // TODO: Hämta riktig statistik från API när content types är skapade
-      // const response = await fetch('/api/expand/Statistic');
-      // const data = await response.json();
-      // setStats(data);
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    }
-  };
+const Home = () => {
+  const stats = [
+    { label: "Active Members", value: "2.4K", icon: "bi-people" },
+    { label: "Posts Today", value: "156", icon: "bi-chat-square" },
+    { label: "Upcoming Events", value: "24", icon: "bi-file-text" },
+    { label: "Items Listed", value: "89", icon: "bi-graph-up" },
+  ];
 
   return (
     <div className="home-page">
-      <div className="hero-section">
-        <div className="hero-badge">
-          <span className="badge-icon">✨</span>
-          <span>Your Social Community Platform</span>
-        </div>
-        <h1 className="hero-title">
-          Welcome to <span className="hero-title-highlight">Orchid</span>
-        </h1>
-        <p className="hero-description">
-          Share your thoughts, connect with others, discover events, buy and sell in the
-          marketplace, and build your community.
-        </p>
-        <div className="hero-actions">
-          <a href="/community" className="btn btn-primary">
-            Explore Orchid
-            <span className="btn-icon">→</span>
-          </a>
-          <a href="/events" className="btn btn-secondary">
-            <span className="btn-icon">📅</span>
-            Browse Events
-          </a>
-        </div>
-      </div>
+      {/* Hero Section */}
+      <section className="hero-section">
+        <div className="hero-background"></div>
+        <div className="hero-radial-gradient"></div>
+        <Container className="hero-container">
+          <div className="hero-badge">
+            <i className="bi bi-stars me-2"></i>
+            <span>Your Social Community Platform</span>
+          </div>
+          <h1 className="hero-title">
+            Welcome to
+            <span className="hero-title-gradient">Orchid</span>
+          </h1>
+          <p className="hero-description">
+            Share your thoughts, connect with others, discover events, buy and sell in the marketplace, and build your community.
+          </p>
+          <div className="hero-buttons">
+            <Link to="/community">
+              <Button size="lg" className="hero-btn-primary">
+                Explore Orchid
+                <i className="bi bi-arrow-right ms-2 hero-icon-hover"></i>
+              </Button>
+            </Link>
+            <Link to="/events">
+              <Button size="lg" variant="outline" className="hero-btn-outline">
+                Browse Events
+                <i className="bi bi-file-earmark-text ms-2 hero-icon-hover"></i>
+              </Button>
+            </Link>
+          </div>
+        </Container>
+      </section>
 
-      <div className="stats-section">
-        <div className="stat-card">
-          <div className="stat-icon">👥</div>
-          <div className="stat-value">{formatNumber(stats.members)}</div>
-          <div className="stat-label">Members</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">💬</div>
-          <div className="stat-value">{stats.posts}</div>
-          <div className="stat-label">Posts</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">📄</div>
-          <div className="stat-value">{stats.events}</div>
-          <div className="stat-label">Events</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">📈</div>
-          <div className="stat-value">{stats.growth}%</div>
-          <div className="stat-label">Growth</div>
-        </div>
-      </div>
-
-      {/* Rollbaserad innehåll */}
-      {isAuthenticated && (
-        <div className="role-based-content">
-          {hasRole('Administrator') && (
-            <div className="admin-panel">
-              <h2>Admin Dashboard</h2>
-              <p>You have administrator access to manage the platform.</p>
-            </div>
-          )}
-          {hasRole('Moderator') && (
-            <div className="moderator-panel">
-              <h2>Moderator Tools</h2>
-              <p>You can moderate content and manage community posts.</p>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Stats Section */}
+      <section className="stats-section">
+        <Container>
+          <div className="stats-grid">
+            {stats.map((stat, index) => (
+              <Card 
+                key={stat.label} 
+                className="stat-card"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <Card.Body className="text-center p-4">
+                  <div className="stat-icon-wrapper">
+                    <i className={`bi ${stat.icon} stat-icon`}></i>
+                  </div>
+                  <div className="stat-value">{stat.value}</div>
+                  <div className="stat-label">{stat.label}</div>
+                </Card.Body>
+              </Card>
+            ))}
+          </div>
+        </Container>
+      </section>
     </div>
   );
-}
+};
 
-function formatNumber(num: number): string {
-  if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'K';
-  }
-  return num.toString();
-}
+Home.route = {
+  index: true,
+  menuLabel: 'Home',
+  parent: '/',
+};
+
+export default Home;
 

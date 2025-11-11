@@ -1,0 +1,1056 @@
+@import url('https://fonts.googleapis.com/css2?family=Chewy&family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+
+// Import Bootstrap
+@import 'bootstrap/scss/bootstrap';
+
+// Import UI Component Styles
+@import 'components/button';
+@import 'components/card';
+@import 'components/badge';
+@import 'components/alert';
+@import 'components/avatar';
+@import 'components/dropdown-menu';
+@import 'components/header';
+@import 'components/navigation';
+@import 'components/theme-toggle';
+@import 'components/notifications-dropdown';
+
+// ============================================
+// Design System - CSS Custom Properties
+// All colors, gradients, fonts, etc defined here
+// All colors MUST be HSL
+// ============================================
+
+:root {
+  // Colors - Light Mode
+  --background: 0 0% 98%;
+  --foreground: 215 25% 27%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 25% 27%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 25% 27%;
+  --primary: 203 89% 53%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 17% 95%;
+  --secondary-foreground: 215 25% 27%;
+  --muted: 210 17% 95%;
+  --muted-foreground: 215 14% 55%;
+  --accent: 203 89% 53%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 20% 90%;
+  --input: 214 20% 90%;
+  --ring: 203 89% 53%;
+  --radius: 0.75rem;
+  
+  // Shadows
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  
+  // Transitions
+  --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  // Gradients
+  --gradient-ambient: linear-gradient(135deg, hsl(203 89% 53% / 0.03) 0%, hsl(210 17% 95% / 0.05) 50%, hsl(203 89% 53% / 0.02) 100%);
+  --gradient-mesh: radial-gradient(at 20% 20%, hsl(203 89% 53% / 0.08) 0px, transparent 50%),
+                    radial-gradient(at 80% 80%, hsl(203 89% 53% / 0.06) 0px, transparent 50%),
+                    radial-gradient(at 50% 50%, hsl(210 17% 95% / 0.1) 0px, transparent 50%);
+  
+  // Sidebar
+  --sidebar-background: 0 0% 98%;
+  --sidebar-foreground: 240 5.3% 26.1%;
+  --sidebar-primary: 240 5.9% 10%;
+  --sidebar-primary-foreground: 0 0% 98%;
+  --sidebar-accent: 240 4.8% 95.9%;
+  --sidebar-accent-foreground: 240 5.9% 10%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-ring: 217.2 91.2% 59.8%;
+}
+
+// Dark Mode
+[data-bs-theme="dark"],
+.dark {
+  --background: 215 28% 17%;
+  --foreground: 210 17% 95%;
+  --card: 215 25% 20%;
+  --card-foreground: 210 17% 95%;
+  --popover: 215 25% 20%;
+  --popover-foreground: 210 17% 95%;
+  --primary: 203 89% 53%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 215 20% 25%;
+  --secondary-foreground: 210 17% 95%;
+  --muted: 215 20% 25%;
+  --muted-foreground: 215 14% 65%;
+  --accent: 203 89% 53%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 215 20% 30%;
+  --input: 215 20% 30%;
+  --ring: 203 89% 53%;
+  
+  --gradient-ambient: linear-gradient(135deg, hsl(203 89% 53% / 0.05) 0%, hsl(215 20% 25% / 0.08) 50%, hsl(203 89% 53% / 0.03) 100%);
+  --gradient-mesh: radial-gradient(at 20% 20%, hsl(203 89% 53% / 0.12) 0px, transparent 50%),
+                    radial-gradient(at 80% 80%, hsl(203 89% 53% / 0.08) 0px, transparent 50%),
+                    radial-gradient(at 50% 50%, hsl(215 20% 25% / 0.15) 0px, transparent 50%);
+  
+  --sidebar-background: 215 28% 17%;
+  --sidebar-foreground: 210 17% 95%;
+  --sidebar-primary: 203 89% 53%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 215 20% 25%;
+  --sidebar-accent-foreground: 210 17% 95%;
+  --sidebar-border: 215 20% 30%;
+  --sidebar-ring: 203 89% 53%;
+}
+
+// Base styles
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  position: relative;
+  transition: var(--transition-smooth);
+}
+
+// Gradient background effects
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--gradient-ambient);
+  z-index: -2;
+  pointer-events: none;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--gradient-mesh);
+  z-index: -1;
+  pointer-events: none;
+}
+
+// Navbar styles - using design system variables
+.navbar {
+  background-color: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+  
+  .navbar-brand,
+  .nav-link {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .nav-link:hover {
+    color: hsl(var(--primary)) !important;
+  }
+}
+
+// Light mode navbar override
+[data-bs-theme="light"] .navbar {
+  background-color: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+  
+  .navbar-brand,
+  .nav-link {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .nav-link:hover {
+    color: hsl(var(--primary)) !important;
+  }
+}
+
+// Twitter-like design system - using design system variables
+.text-twitter-dark {
+  color: hsl(var(--foreground)) !important;
+}
+
+.text-twitter-secondary {
+  color: hsl(var(--muted-foreground)) !important;
+  
+  // Ensure Bootstrap Icons are visible
+  .bi {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: inherit;
+  }
+}
+
+.text-twitter-primary {
+  color: hsl(var(--primary)) !important;
+}
+
+.bg-twitter-primary {
+  background-color: hsl(var(--primary)) !important;
+}
+
+.bg-twitter-white {
+  background-color: hsl(var(--card)) !important;
+}
+
+// Twitter-like cards - using design system variables
+.card-twitter {
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-smooth);
+}
+
+.card-twitter:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+// Twitter-like form controls - using design system variables
+.form-control-twitter {
+  border: 1px solid hsl(var(--input));
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  border-radius: calc(var(--radius) * 1.5);
+  padding: 12px 16px;
+  font-size: 15px;
+  transition: var(--transition-smooth);
+  width: 100%;
+}
+
+.form-control-twitter:focus {
+  background-color: hsl(var(--card));
+  box-shadow: 0 0 0 2px hsl(var(--ring));
+  border-color: hsl(var(--ring));
+  outline: none;
+}
+
+// Twitter-like buttons - using design system variables
+.btn-twitter {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-weight: 600;
+  border-radius: calc(var(--radius) * 1.5);
+  padding: 8px 16px;
+  transition: var(--transition-smooth);
+}
+
+.btn-twitter:hover {
+  background-color: hsl(var(--primary) / 0.9);
+  border-color: hsl(var(--primary) / 0.9);
+  color: hsl(var(--primary-foreground));
+}
+
+.btn-twitter-outline {
+  background-color: transparent;
+  border: 1px solid hsl(var(--primary));
+  color: hsl(var(--primary));
+  font-weight: 600;
+  border-radius: calc(var(--radius) * 1.5);
+  padding: 8px 16px;
+  transition: var(--transition-smooth);
+}
+
+.btn-twitter-outline:hover {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+// Twitter-like navigation
+.nav-link-twitter {
+  color: #536471;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+}
+
+.nav-link-twitter:hover {
+  background-color: rgba(29, 155, 240, 0.1);
+  color: #1d9bf0;
+}
+
+.nav-link-twitter.active {
+  background-color: #1d9bf0;
+  color: white;
+}
+
+// Twitter-like avatars
+.avatar-twitter {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: white;
+  font-size: 14px;
+}
+
+// Twitter-like badges
+.badge-twitter {
+  background-color: #f7f9fa;
+  color: #536471;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 4px 8px;
+}
+
+// Twitter-like spacing
+.twitter-spacing {
+  padding: 20px;
+}
+
+// Ensure Bootstrap Icons are always visible
+.bi {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  font-family: "bootstrap-icons" !important;
+}
+
+// Hover effects
+.hover-shadow {
+  transition: box-shadow 0.2s ease;
+}
+
+.hover-shadow:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+// Featured Posts using Bootstrap components
+.featured-post-card-desktop {
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+  
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  }
+}
+
+// Dark mode styles - using design system variables
+[data-bs-theme="dark"] {
+  body {
+    background-color: hsl(var(--background));
+  }
+  
+  .text-twitter-dark {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .text-twitter-secondary {
+    color: hsl(var(--muted-foreground)) !important;
+    
+    // Ensure Bootstrap Icons are visible
+    .bi {
+      display: inline-block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      color: inherit;
+    }
+  }
+  
+  .bg-twitter-white {
+    background-color: hsl(var(--card)) !important;
+  }
+  
+  .card-twitter {
+    background-color: hsl(var(--card));
+    border-color: hsl(var(--border));
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .card-twitter:hover {
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .form-control-twitter {
+    background-color: hsl(var(--input));
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--input));
+  }
+  
+  .form-control-twitter:focus {
+    background-color: hsl(var(--input));
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--ring));
+    box-shadow: 0 0 0 2px hsl(var(--ring) / 0.25);
+  }
+  
+  .btn-twitter-outline {
+    border-color: hsl(var(--border));
+    color: hsl(var(--foreground));
+  }
+  
+  .btn-twitter-outline:hover {
+    background-color: hsl(var(--primary));
+    border-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+  
+  .badge-twitter {
+    background-color: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+  }
+  
+  .navbar {
+    background-color: hsl(var(--card)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+  
+  .navbar-brand,
+  .nav-link {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .dropdown-menu {
+    background-color: hsl(var(--popover));
+    border-color: hsl(var(--border));
+    color: hsl(var(--popover-foreground));
+  }
+  
+  .dropdown-item {
+    color: hsl(var(--popover-foreground));
+  }
+  
+  .dropdown-item:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+  
+  .dropdown-divider {
+    border-color: hsl(var(--border));
+  }
+  
+  .alert-warning {
+    background-color: hsl(30 50% 20%);
+    border-color: hsl(30 50% 30%);
+    color: hsl(30 80% 60%);
+  }
+}
+
+// Home Page Styles
+.home-page {
+  min-height: calc(100vh - 4rem);
+}
+
+// Hero Section
+.hero-section {
+  position: relative;
+  padding: 8rem 1rem;
+  overflow: hidden;
+  min-height: 600px;
+  display: flex;
+  align-items: center;
+}
+
+.hero-background {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom right, rgba(29, 155, 240, 0.1), rgba(25, 39, 52, 1), rgba(29, 155, 240, 0.1));
+}
+
+.hero-radial-gradient {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top, rgba(29, 155, 240, 0.2), transparent);
+}
+
+.hero-container {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  max-width: 1200px;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  background-color: rgba(29, 155, 240, 0.1);
+  border: 1px solid rgba(29, 155, 240, 0.2);
+  margin-bottom: 1.5rem;
+  color: #1d9bf0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  animation: fadeIn 0.6s ease-in;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+  animation: fadeIn 0.8s ease-in;
+  
+  @media (min-width: 768px) {
+    font-size: 4.5rem;
+  }
+}
+
+.hero-title-gradient {
+  display: block;
+  background: linear-gradient(to right, #1d9bf0, rgba(29, 155, 240, 0.8), rgba(29, 155, 240, 0.6));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-description {
+  font-size: 1.25rem;
+  color: #8b98a5;
+  margin-bottom: 2.5rem;
+  max-width: 48rem;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+  animation: fadeIn 1s ease-in;
+  
+  @media (min-width: 768px) {
+    font-size: 1.5rem;
+  }
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: fadeIn 1.2s ease-in;
+}
+
+.hero-btn-primary {
+  background-color: #1d9bf0;
+  border-color: #1d9bf0;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background-color: #1a8cd8;
+    border-color: #1a8cd8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(29, 155, 240, 0.3);
+  }
+}
+
+.hero-btn-outline {
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: rgba(29, 155, 240, 0.5);
+    background-color: rgba(29, 155, 240, 0.1);
+    color: white;
+    transform: translateY(-2px);
+  }
+}
+
+.hero-icon-hover {
+  transition: transform 0.3s ease;
+}
+
+.hero-btn-primary:hover .hero-icon-hover,
+.hero-btn-outline:hover .hero-icon-hover {
+  transform: translateX(4px);
+}
+
+// Stats Section
+.stats-section {
+  padding: 5rem 1rem;
+  background-color: rgba(25, 39, 52, 0.5);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stat-card {
+  border: 1px solid rgba(29, 155, 240, 0.1);
+  border-radius: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  animation: fadeIn 0.6s ease-in both;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    border-color: rgba(29, 155, 240, 0.3);
+  }
+}
+
+.stat-icon-wrapper {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background-color: rgba(29, 155, 240, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover .stat-icon-wrapper {
+  transform: scale(1.1);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  color: #1d9bf0;
+}
+
+.stat-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(to right, #1d9bf0, rgba(29, 155, 240, 0.6));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #8b98a5;
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Dark mode adjustments for home page
+[data-bs-theme="dark"] {
+  .hero-section {
+    background-color: #15202b;
+  }
+  
+  .hero-background {
+    background: linear-gradient(to bottom right, rgba(29, 155, 240, 0.1), #15202b, rgba(29, 155, 240, 0.1));
+  }
+  
+  .stats-section {
+    background-color: rgba(21, 32, 43, 0.8);
+  }
+  
+  .stat-card {
+    background-color: rgba(25, 39, 52, 0.8);
+    border-color: rgba(29, 155, 240, 0.2);
+  }
+}
+
+// Light mode adjustments for home page
+[data-bs-theme="light"] {
+  .hero-section {
+    background-color: #f7f9fa;
+  }
+  
+  .hero-background {
+    background: linear-gradient(to bottom right, rgba(29, 155, 240, 0.1), #ffffff, rgba(29, 155, 240, 0.1));
+  }
+  
+  .hero-title {
+    color: #0f1419;
+  }
+  
+  .hero-description {
+    color: #536471;
+  }
+  
+  .hero-btn-outline {
+    border-color: rgba(0, 0, 0, 0.2);
+    color: #0f1419;
+    
+    &:hover {
+      border-color: #1d9bf0;
+      background-color: rgba(29, 155, 240, 0.1);
+      color: #1d9bf0;
+    }
+  }
+  
+  .stats-section {
+    background-color: rgba(247, 249, 250, 0.5);
+  }
+  
+  .stat-card {
+    background-color: #ffffff;
+    border-color: rgba(29, 155, 240, 0.1);
+    
+    &:hover {
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+  }
+  
+  .stat-value {
+    color: #0f1419;
+  }
+  
+  .stat-label {
+    color: #536471;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .card-twitter {
+    border-radius: 12px;
+  }
+  
+  .btn-twitter,
+  .btn-twitter-outline {
+    border-radius: 16px;
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+  
+  .hero-section {
+    padding: 4rem 1rem;
+    min-height: 500px;
+  }
+  
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-description {
+    font-size: 1.125rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .stat-card {
+    padding: 1.5rem !important;
+  }
+}
+
+// ============================================
+// UI Components - Design System Components
+// Button, Card, Badge, Alert
+// ============================================
+
+// Button Variants
+.btn-design-default {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  transition: var(--transition-smooth);
+  
+  &:hover {
+    background-color: hsl(var(--primary) / 0.9);
+    border-color: hsl(var(--primary) / 0.9);
+    color: hsl(var(--primary-foreground));
+  }
+  
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+  }
+  
+  &:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}
+
+.btn-design-destructive {
+  background-color: hsl(var(--destructive));
+  border-color: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+  transition: var(--transition-smooth);
+  
+  &:hover {
+    background-color: hsl(var(--destructive) / 0.9);
+    border-color: hsl(var(--destructive) / 0.9);
+    color: hsl(var(--destructive-foreground));
+  }
+}
+
+.btn-design-outline {
+  border: 1px solid hsl(var(--input));
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  transition: var(--transition-smooth);
+  
+  &:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+}
+
+.btn-design-secondary {
+  background-color: hsl(var(--secondary));
+  border-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  transition: var(--transition-smooth);
+  
+  &:hover {
+    background-color: hsl(var(--secondary) / 0.8);
+    border-color: hsl(var(--secondary) / 0.8);
+    color: hsl(var(--secondary-foreground));
+  }
+}
+
+.btn-design-ghost {
+  background-color: transparent;
+  border-color: transparent;
+  color: hsl(var(--foreground));
+  transition: var(--transition-smooth);
+  
+  &:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+}
+
+.btn-design-link {
+  background-color: transparent;
+  border-color: transparent;
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  transition: var(--transition-smooth);
+  
+  &:hover {
+    text-decoration: underline;
+    color: hsl(var(--primary) / 0.8);
+  }
+}
+
+// Button Sizes
+.btn-size-default {
+  height: 2.5rem;
+  padding: 0.5rem 1rem;
+}
+
+.btn-size-sm {
+  height: 2.25rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: calc(var(--radius) - 2px);
+}
+
+.btn-size-lg {
+  height: 2.75rem;
+  padding: 0.5rem 2rem;
+  border-radius: calc(var(--radius) - 2px);
+}
+
+.btn-icon {
+  height: 2.5rem;
+  width: 2.5rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  svg {
+    pointer-events: none;
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+  }
+}
+
+// Card Components
+.card-design {
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  box-shadow: var(--shadow-sm);
+}
+
+.card-header-design {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid hsl(var(--border));
+  background-color: transparent;
+}
+
+.card-title-design {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  margin: 0;
+  color: hsl(var(--card-foreground));
+}
+
+.card-description-design {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+}
+
+.card-content-design {
+  padding: 1.5rem;
+  padding-top: 0;
+}
+
+.card-footer-design {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  padding-top: 0;
+  border-top: 1px solid hsl(var(--border));
+  background-color: transparent;
+}
+
+// Badge Components
+.badge-design-default {
+  border: 1px solid transparent;
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  transition: var(--transition-smooth);
+  
+  &:hover {
+    background-color: hsl(var(--primary) / 0.8);
+  }
+}
+
+.badge-design-secondary {
+  border: 1px solid transparent;
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  transition: var(--transition-smooth);
+  
+  &:hover {
+    background-color: hsl(var(--secondary) / 0.8);
+  }
+}
+
+.badge-design-destructive {
+  border: 1px solid transparent;
+  background-color: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+  transition: var(--transition-smooth);
+  
+  &:hover {
+    background-color: hsl(var(--destructive) / 0.8);
+  }
+}
+
+.badge-design-outline {
+  border: 1px solid hsl(var(--border));
+  background-color: transparent;
+  color: hsl(var(--foreground));
+}
+
+// Alert Components
+.alert-design-default {
+  position: relative;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+  
+  svg {
+    position: absolute;
+    left: 1rem;
+    top: 1rem;
+    color: hsl(var(--foreground));
+  }
+  
+  > svg ~ * {
+    padding-left: 1.75rem;
+  }
+  
+  > svg + div {
+    transform: translateY(-3px);
+  }
+}
+
+.alert-design-destructive {
+  position: relative;
+  border-color: hsl(var(--destructive) / 0.5);
+  color: hsl(var(--destructive));
+  
+  [data-bs-theme="dark"] & {
+    border-color: hsl(var(--destructive));
+  }
+  
+  svg {
+    position: absolute;
+    left: 1rem;
+    top: 1rem;
+    color: hsl(var(--destructive));
+  }
+  
+  > svg ~ * {
+    padding-left: 1.75rem;
+  }
+  
+  > svg + div {
+    transform: translateY(-3px);
+  }
+}
+
+.alert-title-design {
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  color: inherit;
+}
+
+.alert-description-design {
+  font-size: 0.875rem;
+  
+  p {
+    line-height: 1.625;
+  }
+}
