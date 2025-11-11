@@ -380,7 +380,9 @@ curl -X POST http://localhost:5001/api/Post \
 
 ---
 
-## Steg 7: Spara seed-datan (viktigt!)
+## Steg 7: Spara seed-datan (VIKTIGT!)
+
+**Detta är kritiskt!** Om du inte gör detta kommer nästa person som klonar projektet inte att få dina content types.
 
 När allt är konfigurerat och fungerar:
 
@@ -388,7 +390,36 @@ När allt är konfigurerat och fungerar:
 npm run save
 ```
 
-Detta sparar all konfiguration till `backend/App_Data.seed/` så att du (och andra) kan återställa till denna konfiguration senare.
+Detta sparar all konfiguration till `backend/App_Data.seed/` så att:
+- ✅ Du kan återställa till denna konfiguration senare
+- ✅ När du pushar till git kommer seed-datan att inkluderas
+- ✅ När någon klonar projektet och kör `npm start` första gången, återställs allt automatiskt
+
+**Viktigt:** Efter att du har kört `npm run save`, kom ihåg att:
+1. Committa seed-datan till git: `git add backend/App_Data.seed/`
+2. Pusha till remote: `git push`
+
+---
+
+## Steg 8: Committa och pusha seed-datan
+
+Efter att du har kört `npm run save`:
+
+```bash
+# Kontrollera vad som ändrats
+git status
+
+# Lägg till seed-datan
+git add backend/App_Data.seed/
+
+# Committa
+git commit -m "Add seed data with content types and permissions"
+
+# Pusha
+git push
+```
+
+Nu kommer alla som klonar projektet att få dina content types automatiskt när de kör `npm start` första gången!
 
 ---
 
@@ -403,7 +434,9 @@ Detta sparar all konfiguration till `backend/App_Data.seed/` så att du (och and
 - [ ] Moderator roll skapad
 - [ ] 4 RestPermissions-objekt skapade (Anonymous, Member, Moderator, Administrator)
 - [ ] API testat och fungerar
-- [ ] Seed-datan sparad
+- [ ] Seed-datan sparad med `npm run save`
+- [ ] Seed-datan committad till git (`git add backend/App_Data.seed/`)
+- [ ] Seed-datan pushad till remote repository
 
 ---
 
