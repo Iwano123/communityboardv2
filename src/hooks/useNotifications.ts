@@ -16,10 +16,17 @@ export const useNotifications = (user: User | null) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [endpointAvailable, setEndpointAvailable] = useState<boolean | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     if (!user) {
       setNotifications([]);
+      setIsLoading(false);
+      return;
+    }
+
+    // If we've already determined the endpoint doesn't exist, skip fetching
+    if (endpointAvailable === false) {
       setIsLoading(false);
       return;
     }
@@ -33,28 +40,45 @@ export const useNotifications = (user: User | null) => {
         credentials: 'include'
       });
 
+      // If endpoint doesn't exist (404), mark as unavailable and stop polling
+      if (response.status === 404) {
+        setEndpointAvailable(false);
+        setNotifications([]);
+        setIsLoading(false);
+        return;
+      }
+
       if (!response.ok) {
         throw new Error('Failed to fetch notifications');
       }
 
+      // Endpoint exists and works
+      setEndpointAvailable(true);
       const data = await response.json();
       setNotifications(Array.isArray(data) ? data : []);
     } catch (err: any) {
-      setError(err.message);
+      // Network errors or other issues - check if it's a 404-like error
+      if (err.message?.includes('404') || err.message?.includes('not found')) {
+        setEndpointAvailable(false);
+      }
+      // Silently handle errors - notifications feature may not be implemented yet
+      console.debug('Notifications endpoint not available:', err.message);
       setNotifications([]);
+      setError(null); // Don't show error to user
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, endpointAvailable]);
 
   useEffect(() => {
     fetchNotifications();
     
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    
-    return () => clearInterval(interval);
-  }, [fetchNotifications]);
+    // Only poll if endpoint is available (or we haven't checked yet)
+    if (endpointAvailable !== false) {
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchNotifications, endpointAvailable]);
 
   const unreadCount = notifications?.filter((n) => !n.read).length || 0;
 

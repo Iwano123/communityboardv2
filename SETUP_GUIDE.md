@@ -6,8 +6,8 @@ Följ denna guide steg för steg för att skapa allt från början.
 
 1. Öppna http://localhost:5001/admin
 2. Logga in med:
-   - **Användarnamn:** `tom`
-   - **Lösenord:** `Abcd1234!`
+   - **Användarnamn:** `iwan`
+   - **Lösenord:** `Lile12345!`
 
 ## Steg 2: Skapa Content Types
 
@@ -55,6 +55,12 @@ Följ denna guide steg för steg för att skapa allt från början.
    - **Display Name:** `IsPublished`
    - **Technical Name:** `IsPublished`
    - **Field Type:** Välj **BooleanField**
+   - Klicka **Save**
+
+   **Field 5: ImageUrl** ⭐ NYTT FÄLT
+   - **Display Name:** `ImageUrl`
+   - **Technical Name:** `ImageUrl`
+   - **Field Type:** Välj **TextField**
    - Klicka **Save**
 
 4. När alla fields är tillagda, klicka på **Save** längst ner på sidan

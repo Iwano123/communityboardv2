@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Container, Row, Col, Card, Button, Form, InputGroup, Badge, Alert, Spinner, Modal } from 'react-bootstrap';
-import { useOutletContext } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import type { User } from '../interfaces/BulletinBoard';
 
 ChatPage.route = {
-  path: "/messages",
-  menuLabel: "Messages",
+  path: "/messages-old",
+  menuLabel: "Messages (Old)",
   parent: "/",
 };
 
@@ -32,7 +32,7 @@ interface Message {
 }
 
 export default function ChatPage() {
-  const [, , currentUser] = useOutletContext<[any, any, User | null, any]>();
+  const { user: currentUser } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);

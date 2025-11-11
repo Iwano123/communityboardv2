@@ -7,8 +7,8 @@ Denna guide beskriver hur du konfigurerar Orchard Core CMS för Orchid Community
 1. Starta backend-servern: `npm run backend`
 2. Öppna http://localhost:5001/admin
 3. Logga in med:
-   - **Användarnamn:** `tom`
-   - **Lösenord:** `Abcd1234!`
+   - **Användarnamn:** `iwan`
+   - **Lösenord:** `Lile12345!`
 
 ## Steg 2: Skapa Content Types
 
@@ -28,6 +28,7 @@ Denna guide beskriver hur du konfigurerar Orchard Core CMS för Orchid Community
    - **AuthorId** (TextField) - ID för författaren
    - **Likes** (NumericField) - Antal likes (default: 0)
    - **IsPublished** (BooleanField) - Publiceringsstatus (default: false)
+   - **ImageUrl** (TextField) - URL till bild (valfritt)
 6. Spara
 
 ### 2.2 Skapa "Comment" Content Type

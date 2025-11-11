@@ -3,6 +3,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { chatApi } from '../utils/api';
 import './MessagesPage.css';
 
+MessagesPage.route = {
+  path: "/messages",
+  menuLabel: "Messages",
+  parent: "/",
+};
+
 interface ChatMessage {
   id: string;
   title: string;
@@ -29,6 +35,8 @@ export default function MessagesPage() {
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [newChatUsername, setNewChatUsername] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -70,13 +78,13 @@ export default function MessagesPage() {
     try {
       setIsLoading(true);
       // Hämta alla meddelanden där användaren är sender eller receiver
-      const allMessages = await chatApi.getByUser(user.username);
+      const allMessages = await chatApi.getByUser(user.email);
       
       // Gruppera efter chatRoomId och skapa chat rooms
       const roomsMap = new Map<string, ChatRoom>();
       
       allMessages.forEach((msg: ChatMessage) => {
-        const otherUserId = msg.senderId === user.username ? msg.receiverId : msg.senderId;
+        const otherUserId = msg.senderId === user.email ? msg.receiverId : msg.senderId;
         const roomId = msg.chatRoomId;
         
         if (!roomsMap.has(roomId)) {
@@ -91,7 +99,7 @@ export default function MessagesPage() {
         if (!room.lastMessage || new Date(msg.createdDate || '') > new Date(room.lastMessage.createdDate || '')) {
           room.lastMessage = msg;
         }
-        if (!msg.isRead && msg.receiverId === user.username) {
+        if (!msg.isRead && msg.receiverId === user.email) {
           room.unreadCount++;
         }
       });
@@ -112,7 +120,7 @@ export default function MessagesPage() {
       setMessages(data || []);
       
       // Markera meddelanden som lästa
-      const unreadMessages = data.filter((msg: ChatMessage) => !msg.isRead && msg.receiverId === user?.username);
+      const unreadMessages = data.filter((msg: ChatMessage) => !msg.isRead && msg.receiverId === user?.email);
       for (const msg of unreadMessages) {
         await chatApi.markAsRead(msg.id);
       }
@@ -157,7 +165,7 @@ export default function MessagesPage() {
       });
       
       // Markera som läst om det är till den inloggade användaren
-      if (newMsg.receiverId === user?.username) {
+      if (newMsg.receiverId === user?.email) {
         chatApi.markAsRead(newMsg.id);
       }
       
@@ -179,7 +187,7 @@ export default function MessagesPage() {
       await chatApi.create({
         title: newMessage.substring(0, 50),
         message: newMessage,
-        senderId: user.username,
+        senderId: user.email,
         receiverId: otherUserId,
         chatRoomId: selectedChatRoom,
         isRead: false,
@@ -196,11 +204,21 @@ export default function MessagesPage() {
     if (!user) return;
     
     // Skapa ett unikt chatRoomId (sorterat för konsistens)
-    const chatRoomId = [user.username, receiverId].sort().join('-');
+    const chatRoomId = [user.email, receiverId].sort().join('-');
     setSelectedChatRoom(chatRoomId);
+    setShowNewChatModal(false);
+    setNewChatUsername('');
     
     // Ladda meddelanden för denna chat room
     await loadMessages(chatRoomId);
+  };
+
+  const handleStartNewChat = () => {
+    if (!newChatUsername.trim()) {
+      setError('Please enter a username');
+      return;
+    }
+    createNewChat(newChatUsername.trim());
   };
 
   if (!isAuthenticated) {
@@ -224,9 +242,18 @@ export default function MessagesPage() {
       <div className="messages-sidebar">
         <div className="sidebar-header">
           <h2>Messages</h2>
-          <button className="btn btn-small" onClick={loadChatRooms}>
-            Refresh
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button 
+              className="btn btn-primary btn-small" 
+              onClick={() => setShowNewChatModal(true)}
+              title="New message"
+            >
+              <i className="bi bi-plus-lg"></i>
+            </button>
+            <button className="btn btn-small" onClick={loadChatRooms}>
+              <i className="bi bi-arrow-clockwise"></i>
+            </button>
+          </div>
         </div>
         
         <div className="chat-rooms-list">
@@ -277,7 +304,7 @@ export default function MessagesPage() {
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`message ${msg.senderId === user?.username ? 'sent' : 'received'}`}
+                  className={`message ${msg.senderId === user?.email ? 'sent' : 'received'}`}
                 >
                   <div className="message-content">{msg.message}</div>
                   <div className="message-time">
@@ -305,10 +332,66 @@ export default function MessagesPage() {
           </>
         ) : (
           <div className="no-chat-selected">
-            <p>Select a conversation or start a new chat</p>
+            <p style={{ marginBottom: '1rem', textAlign: 'center' }}>Select a conversation or start a new chat</p>
+            <button 
+              className="btn btn-primary" 
+              onClick={() => setShowNewChatModal(true)}
+            >
+              Start New Chat
+            </button>
           </div>
         )}
       </div>
+
+      {/* New Chat Modal */}
+      {showNewChatModal && (
+        <div className="modal-overlay" onClick={() => setShowNewChatModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>New Message</h3>
+              <button 
+                className="modal-close" 
+                onClick={() => {
+                  setShowNewChatModal(false);
+                  setNewChatUsername('');
+                  setError('');
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>Enter the email or username of the person you want to message:</p>
+              <input
+                type="text"
+                value={newChatUsername}
+                onChange={(e) => setNewChatUsername(e.target.value)}
+                placeholder="Email or username"
+                className="message-input"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleStartNewChat();
+                  }
+                }}
+                autoFocus
+              />
+              {error && <div className="error-message" style={{ marginTop: '0.5rem' }}>{error}</div>}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => {
+                setShowNewChatModal(false);
+                setNewChatUsername('');
+                setError('');
+              }}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" onClick={handleStartNewChat}>
+                Start Chat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

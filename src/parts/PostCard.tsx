@@ -4,12 +4,12 @@ import { useState } from 'react';
 import { useStateContext } from '../utils/useStateObject';
 
 interface PostCardProps {
-  id: number;
+  id: number | string;
   title?: string;
   content: string;
   category_name?: string;
   category_color?: string;
-  author_id: number;
+  author_id: number | string;
   author_name: string;
   author_email: string;
   created_at: string;
@@ -19,8 +19,8 @@ interface PostCardProps {
   is_featured: boolean;
   views: number;
   comments_count: number;
-  onEdit?: (id: number) => void;
-  onDelete?: (id: number) => void;
+  onEdit?: (id: number | string) => void;
+  onDelete?: (id: number | string) => void;
 }
 
 export default function PostCard({

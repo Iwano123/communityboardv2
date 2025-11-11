@@ -10,13 +10,20 @@
     "preview": "vite preview",
     "save": "node scripts/save-seed.js",
     "restore": "node scripts/restore-seed.js",
+    "seed-data": "node scripts/seed-data.js",
+    "check-roles": "node scripts/check-user-roles.js",
     "backend": "node scripts/ensure-setup.js && cd backend && dotnet run --urls http://localhost:5001",
     "start": "concurrently \"npm run backend\" \"npm run dev\""
   },
   "dependencies": {
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
+    "clsx": "^2.1.1",
     "react": "^19.1.1",
+    "react-bootstrap": "^2.10.10",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.5"
+    "react-router-dom": "^7.9.5",
+    "sass": "^1.94.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

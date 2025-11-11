@@ -28,7 +28,7 @@ export default function Header({ user, setUser, isDarkMode, setIsDarkMode }: Hea
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/login", {
+      await fetch("/api/auth/login", {
         method: "DELETE",
         credentials: "include",
       });

@@ -1,115 +1,63 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
+import { useStateObject } from './utils/useStateObject';
+import { useEffect, useState } from 'react';
+import Header from './partials/Header';
+import { PushNotificationPrompt } from './components/PushNotificationPrompt';
+import { registerServiceWorker } from './utils/pushNotifications';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Header from './components/Header';
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import CommunityPage from './pages/CommunityPage';
-import MessagesPage from './pages/MessagesPage';
-import './App.css';
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+function AppContent() {
+  const { user, logout } = useAuth();
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check localStorage for saved theme preference
+    const savedTheme = localStorage.getItem('darkMode');
+    return savedTheme === 'true';
+  });
+  
+  const [state, setState] = useStateObject({
+    categoryChoice: 'All',
+    sortChoice: 'Newest first',
+    searchTerm: '',
+    showOnlyMyPosts: false
+  });
 
-  if (isLoading) {
-    return <div className="loading">Loading...</div>;
-  }
+  // Apply dark mode class to document
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.setAttribute('data-bs-theme', 'dark');
+    } else {
+      document.documentElement.setAttribute('data-bs-theme', 'light');
+    }
+    // Save preference to localStorage
+    localStorage.setItem('darkMode', isDarkMode.toString());
+  }, [isDarkMode]);
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  // Register service worker on mount
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
 
-  return <>{children}</>;
-}
+  const handleSetUser = async (user: any) => {
+    if (user === null) {
+      await logout();
+    }
+  };
 
-function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route
-        path="/"
-        element={
-          <>
-            <Header />
-            <HomePage />
-          </>
-        }
-      />
-      <Route
-        path="/foryou"
-        element={
-          <ProtectedRoute>
-            <Header />
-            <div className="page-container">
-              <h1>For You</h1>
-              <p>Personalized content coming soon...</p>
-            </div>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/community"
-        element={
-          <>
-            <Header />
-            <CommunityPage />
-          </>
-        }
-      />
-      <Route
-        path="/events"
-        element={
-          <>
-            <Header />
-            <div className="page-container">
-              <h1>Events</h1>
-              <p>Events coming soon...</p>
-            </div>
-          </>
-        }
-      />
-      <Route
-        path="/marketplace"
-        element={
-          <>
-            <Header />
-            <div className="page-container">
-              <h1>Marketplace</h1>
-              <p>Marketplace coming soon...</p>
-            </div>
-          </>
-        }
-      />
-      <Route
-        path="/messages"
-        element={
-          <ProtectedRoute>
-            <Header />
-            <MessagesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <Header />
-            <div className="page-container">
-              <h1>Profile</h1>
-              <p>Profile page coming soon...</p>
-            </div>
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+    <div className="d-flex flex-column min-vh-100">
+      <Header user={user} setUser={handleSetUser} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
+      <main className="flex-grow-1">
+        <Outlet context={[state, setState, user]} />
+      </main>
+      <PushNotificationPrompt user={user} />
+    </div>
   );
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

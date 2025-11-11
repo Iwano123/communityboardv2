@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Card, Container, Row, Col, Button, Badge, Alert, Spinner } from 'react-bootstrap';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useStateContext } from '../utils/useStateObject';
+import { useAuth } from '../contexts/AuthContext';
 import CommentsSection from '../parts/CommentsSection';
-import type { Post, Comment, User } from '../interfaces/BulletinBoard';
+import { postApi, commentApi } from '../utils/api';
+import { mapBackendPostToFrontend } from '../utils/dataMapper';
+import type { Post, Comment } from '../interfaces/BulletinBoard';
 
 PostDetailsPage.route = {
   path: '/post/:id',
@@ -13,14 +15,12 @@ PostDetailsPage.route = {
 export default function PostDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const context = useStateContext();
-  const [, , user] = context || [null, null, null];
+  const { user } = useAuth();
   
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [author, setAuthor] = useState<User | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -30,92 +30,50 @@ export default function PostDetailsPage() {
         setLoading(true);
         setError('');
 
+        // Load post
+        const backendPost = await postApi.getById(id);
+        const mappedPost = mapBackendPostToFrontend(backendPost);
+        
         // Check if user has already viewed this post in this session
         const viewedPostsKey = 'viewedPosts';
         const viewedPosts = JSON.parse(localStorage.getItem(viewedPostsKey) || '[]');
-        const hasViewed = viewedPosts.includes(parseInt(id));
+        const hasViewed = viewedPosts.includes(id);
 
-        // First, get the current post and categories
-        const [currentPostResponse, categoriesResponse] = await Promise.all([
-          fetch(`/api/posts/${id}`, {
-            credentials: 'include'
-          }),
-          fetch('/api/categories', {
-            credentials: 'include'
-          })
-        ]);
-        
-        if (!currentPostResponse.ok) {
-          throw new Error('Post not found');
-        }
-        
-        const currentPostData = await currentPostResponse.json();
-        const categoriesData = await categoriesResponse.json();
-        
-        // Join post with category data
-        const category = categoriesData.find((cat: any) => cat.id === currentPostData.category_id);
-        const postWithCategory = {
-          ...currentPostData,
-          category_name: category?.name || 'Unknown',
-          category_color: category?.color || '#007bff'
-        };
-        
         // Increment view count only if user hasn't viewed this post in this session
         if (!hasViewed) {
           try {
-            await fetch(`/api/posts/${id}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              credentials: 'include',
-              body: JSON.stringify({
-                views: (postWithCategory.views || 0) + 1
-              })
+            await postApi.update(id, {
+              likes: (backendPost.likes || 0) + 1
             });
             
             // Mark this post as viewed in localStorage
-            const updatedViewedPosts = [...viewedPosts, parseInt(id)];
+            const updatedViewedPosts = [...viewedPosts, id];
             localStorage.setItem(viewedPostsKey, JSON.stringify(updatedViewedPosts));
             
             // Update the post data with incremented views
             setPost({
-              ...currentPostData,
-              views: (currentPostData.views || 0) + 1
+              ...mappedPost,
+              views: (mappedPost.views || 0) + 1
             });
           } catch (viewError) {
             console.log('Could not increment view count:', viewError);
-            // Continue loading even if view increment fails
-            setPost(postWithCategory);
+            setPost(mappedPost);
           }
         } else {
-          // User has already viewed this post, don't increment
-          setPost(postWithCategory);
-        }
-
-        // Load author details
-        if (postWithCategory.author_id) {
-          const authorResponse = await fetch(`/api/users/${postWithCategory.author_id}`, {
-            credentials: 'include'
-          });
-          if (authorResponse.ok) {
-            const authorData = await authorResponse.json();
-            setAuthor(authorData);
-          }
+          setPost(mappedPost);
         }
 
         // Load comments
-        const commentsResponse = await fetch(`/api/comments?post_id=${id}`, {
-          credentials: 'include'
-        });
-        
-        if (commentsResponse.ok) {
-          const commentsData = await commentsResponse.json();
-          setComments(commentsData);
+        try {
+          const commentsData = await commentApi.getByPostId(id);
+          setComments(commentsData || []);
+        } catch (commentError) {
+          console.error('Error loading comments:', commentError);
+          setComments([]);
         }
 
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load post');
+      } catch (err: any) {
+        setError(err.message || 'Failed to load post');
       } finally {
         setLoading(false);
       }
@@ -127,12 +85,9 @@ export default function PostDetailsPage() {
   const handleCommentAdded = async () => {
     // Reload comments
     try {
-      const response = await fetch(`/api/comments?post_id=${id}`, {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const commentsData = await response.json();
-        setComments(commentsData);
+      if (id) {
+        const commentsData = await commentApi.getByPostId(id);
+        setComments(commentsData || []);
       }
     } catch (err) {
       console.error('Error reloading comments:', err);
@@ -140,19 +95,11 @@ export default function PostDetailsPage() {
   };
 
   const handleDeletePost = async () => {
-    if (!post || !confirm('Are you sure you want to delete this post?')) return;
+    if (!post || !id || !confirm('Are you sure you want to delete this post?')) return;
 
     try {
-      const response = await fetch(`/api/posts/${post.id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        navigate('/');
-      } else {
-        alert('Failed to delete post');
-      }
+      await postApi.delete(id);
+      navigate('/for-you');
     } catch (error) {
       console.error('Error deleting post:', error);
       alert('Error deleting post');
@@ -217,7 +164,7 @@ export default function PostDetailsPage() {
     );
   }
 
-  const isAuthor = user && user.id === post.author_id;
+  const isAuthor = user && (post.author_email === user.email || post.author_name === `${user.firstName} ${user.lastName}`);
   const isAdmin = user && user.role === 'admin';
 
   return (
@@ -244,14 +191,14 @@ export default function PostDetailsPage() {
                       fontSize: '20px'
                     }}
                   >
-                    {author?.firstName?.charAt(0)?.toUpperCase() || '?'}
+                    {post.author_name?.charAt(0)?.toUpperCase() || '?'}
                   </div>
                   <div>
                     <div className="fw-bold text-twitter-dark">
-                      {author?.firstName} {author?.lastName}
+                      {post.author_name || 'Unknown'}
                     </div>
                     <div className="text-twitter-secondary small">
-                      @{author?.email?.split('@')[0]}
+                      @{post.author_email?.split('@')[0] || 'user'}
                     </div>
                   </div>
                 </div>
@@ -354,7 +301,7 @@ export default function PostDetailsPage() {
                 {(isAuthor || isAdmin) && (
                   <div className="d-flex">
                     {isAuthor && (
-                      <Link to={`/edit-post/${post.id}`}>
+                      <Link to={`/edit-post/${id}`}>
                         <Button
                           variant="outline-primary"
                           size="sm"
@@ -380,10 +327,10 @@ export default function PostDetailsPage() {
               </div>
 
               {/* Contact Info */}
-              {author?.email && (
+              {post.author_email && (
                 <div className="mt-3 pt-3 border-top">
                   <small className="text-twitter-secondary">
-                    📧 Contact: {author.email}
+                    📧 Contact: {post.author_email}
                   </small>
                 </div>
               )}

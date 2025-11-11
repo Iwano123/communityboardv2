@@ -7,12 +7,12 @@ MarketplacePage.route = {
   parent: "/",
 };
 
-// Redirect to community page with for-sale filter
+// Redirect to for-you page (marketplace items are shown there)
 export default function MarketplacePage() {
   const navigate = useNavigate();
   
   useEffect(() => {
-    navigate('/community?tab=for-sale', { replace: true });
+    navigate('/for-you', { replace: true });
   }, [navigate]);
   
   return null;

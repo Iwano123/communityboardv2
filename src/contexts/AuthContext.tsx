@@ -1,10 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { checkAuth, logout as apiLogout } from '../utils/auth';
-
-interface User {
-  username: string;
-  roles: string[];
-}
+import type { User } from '../interfaces/BulletinBoard';
 
 interface AuthContextType {
   user: User | null;
@@ -29,7 +25,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const result = await checkAuth();
       if (result.isAuthenticated && result.user) {
-        setUser(result.user);
+        // Map backend user to BulletinBoard User interface
+        const mappedUser: User = {
+          id: 0, // Backend doesn't return id, will need to get from elsewhere
+          firstName: result.user.username.split(' ')[0] || '',
+          lastName: result.user.username.split(' ').slice(1).join(' ') || '',
+          email: result.user.username, // Use username as email fallback
+          role: result.user.roles.includes('Administrator') ? 'admin' : 
+                result.user.roles.includes('Moderator') ? 'moderator' : 'user',
+          created: new Date().toISOString(),
+        };
+        setUser(mappedUser);
       } else {
         setUser(null);
       }
@@ -52,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasRole = (role: string): boolean => {
     if (!user) return false;
-    return user.roles.includes(role);
+    return user.role === role || user.role === 'admin';
   };
 
   return (
