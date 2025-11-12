@@ -169,3 +169,75 @@
   background: #4b5563;
 }
 
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .header-container {
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.25rem;
+  }
+
+  .logo-name {
+    font-size: 1.125rem;
+  }
+
+  .logo-tagline {
+    display: none;
+  }
+
+  .nav {
+    display: none; /* Hidden on mobile, shown in bottom nav */
+  }
+
+  .header-actions {
+    gap: 0.25rem;
+  }
+
+  .icon-button {
+    width: 44px;
+    height: 44px;
+    font-size: 1.125rem;
+  }
+
+  .logout-button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Small devices */
+@media (max-width: 390px) {
+  .header-container {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .logo-name {
+    font-size: 1rem;
+  }
+
+  .icon-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Hide less critical action buttons on very small screens */
+  .header-actions .icon-button:nth-child(n+3) {
+    display: none;
+  }
+}
+
+/* Touch feedback */
+@media (hover: none) and (pointer: coarse) {
+  .nav-link:active,
+  .icon-button:active,
+  .logout-button:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+}
+
