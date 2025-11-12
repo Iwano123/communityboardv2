@@ -215,7 +215,12 @@ export default function PostCard({
                     objectFit: 'cover'
                   }}
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x450?text=Image+Not+Available';
+                    const img = e.target as HTMLImageElement;
+                    // Don't try to load placeholder if we're already on a placeholder or external URL
+                    if (!img.src.includes('via.placeholder.com') && !img.src.includes('data:')) {
+                      // Hide the image instead of trying to load a placeholder that might fail
+                      img.style.display = 'none';
+                    }
                   }}
                 />
               </div>
@@ -247,7 +252,9 @@ export default function PostCard({
                           objectFit: 'cover'
                         }}
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/80x60?text=Error';
+                          const img = e.target as HTMLImageElement;
+                          // Hide the image instead of trying to load a placeholder that might fail
+                          img.style.display = 'none';
                         }}
                       />
                     </div>

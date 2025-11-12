@@ -14,9 +14,19 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Ignore placeholder image requests to prevent infinite loops
+  if (event.request.url.includes('via.placeholder.com')) {
+    // Return a failed response immediately to prevent retries
+    event.respondWith(new Response('', { status: 404, statusText: 'Not Found' }));
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+      return response || fetch(event.request).catch(() => {
+        // If fetch fails, return a 404 response instead of letting it propagate
+        return new Response('', { status: 404, statusText: 'Not Found' });
+      });
     })
   );
 });

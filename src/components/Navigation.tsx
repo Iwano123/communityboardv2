@@ -17,6 +17,7 @@ export function Navigation({ user }: NavigationProps) {
       <NavLink to="/messages" icon="bi-chat-square">Messages</NavLink>
       <NavLink to="/profile" icon="bi-person">Profile</NavLink>
       {isAdmin && <NavLink to="/admin" icon="bi-shield-check">Admin</NavLink>}
+      <NavLink to="/create-post" icon="bi-plus-circle" style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>Create Post</NavLink>
     </nav>
   );
 }

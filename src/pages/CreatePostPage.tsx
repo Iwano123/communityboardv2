@@ -39,12 +39,17 @@ export default function CreatePostPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) {
+      setError('You must be logged in to create a post');
+      return;
+    }
     
     setLoading(true);
     setError('');
 
     try {
+      console.log('Creating post with data:', formData);
+      
       const postData: any = {
         title: formData.title,
         content: formData.content,
@@ -53,16 +58,36 @@ export default function CreatePostPage() {
         isPublished: true,
       };
 
-      // Add image URL if provided (use lowercase 'imageUrl')
+      // Add image URL if provided (this field exists in Post content type)
       if (formData.image_url) {
         postData.imageUrl = formData.image_url;
       }
 
-      await postApi.create(postData);
+      // Note: location, price, and contactInfo fields are not part of Post content type
+      // If you need these fields, they must be added to the Post content type in Orchard Core admin
 
+      console.log('Sending post data:', postData);
+      const result = await postApi.create(postData);
+      console.log('Post created successfully:', result);
+
+      // Navigate to for-you page after successful creation
       navigate('/for-you');
     } catch (err: any) {
-      setError(err.message || 'Error creating post');
+      console.error('Error creating post:', err);
+      
+      // Build detailed error message
+      let errorMessage = err?.message || err?.error || err?.data?.error || err?.data?.message || 'Error creating post. Please try again.';
+      
+      // If backend returned invalidFields or validFields, include them in the error message
+      if (err?.data?.invalidFields && Array.isArray(err.data.invalidFields) && err.data.invalidFields.length > 0) {
+        errorMessage += `\n\nInvalid fields: ${err.data.invalidFields.join(', ')}`;
+      }
+      
+      if (err?.data?.validFields && Array.isArray(err.data.validFields) && err.data.validFields.length > 0) {
+        errorMessage += `\n\nValid fields: ${err.data.validFields.join(', ')}`;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -78,7 +103,12 @@ export default function CreatePostPage() {
               <p className="text-twitter-secondary small">Share something with your community</p>
             </Card.Header>
             <Card.Body className="twitter-spacing">
-              {error && <Alert variant="danger" className="rounded-pill text-center">{error}</Alert>}
+              {error && (
+                <Alert variant="danger" className="mb-3" dismissible onClose={() => setError('')}>
+                  <Alert.Heading>Error</Alert.Heading>
+                  <div style={{ whiteSpace: 'pre-line' }}>{error}</div>
+                </Alert>
+              )}
               
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3">

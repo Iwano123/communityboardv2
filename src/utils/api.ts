@@ -28,8 +28,28 @@ async function apiRequest<T>(
   const response = await fetch(`${API_BASE}${endpoint}`, config);
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `HTTP error! status: ${response.status}`);
+    let errorData: any;
+    try {
+      errorData = await response.json();
+    } catch {
+      errorData = { message: `HTTP error! status: ${response.status} ${response.statusText}` };
+    }
+    
+    // Log error for debugging
+    console.error('API request failed:', {
+      endpoint,
+      method,
+      status: response.status,
+      statusText: response.statusText,
+      error: errorData
+    });
+    
+    // Throw error with detailed message
+    const errorMessage = errorData?.error || errorData?.message || `Request failed with status ${response.status}`;
+    const error = new Error(errorMessage);
+    (error as any).status = response.status;
+    (error as any).data = errorData;
+    throw error;
   }
 
   return response.json();

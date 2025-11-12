@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLoaderData } from 'react-router-dom';
+import { useLoaderData, useRevalidator } from 'react-router-dom';
 import { Container, Row, Col, Card, Button, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { postApi, eventApi, marketplaceApi } from '../utils/api';
@@ -63,7 +63,9 @@ interface MixedContent {
 }
 
 export default function ForYouPage() {
-  const rawPosts = (useLoaderData() as { posts: Post[] }).posts;
+  const loaderData = useLoaderData() as { posts: Post[] };
+  const revalidator = useRevalidator();
+  const rawPosts = loaderData.posts;
   const [posts, setPosts] = useState<Post[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
@@ -71,16 +73,61 @@ export default function ForYouPage() {
   const [loading, setLoading] = useState(true);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
 
+  // Revalidate data when component mounts (to get newly created posts)
+  useEffect(() => {
+    // Small delay to ensure backend has processed the new post
+    const timer = setTimeout(() => {
+      revalidator.revalidate();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [revalidator]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Process posts from loader
-        const processedPosts: Post[] = rawPosts.map((post: Post) => ({
-          ...post,
-          author_name: post.author_name || post.author_email || 'Unknown',
-          author_email: post.author_email || post.author_name || '',
-        }));
-        setPosts(processedPosts);
+        // Also fetch posts directly from API to ensure we have the latest data
+        // This is especially important after creating a new post
+        try {
+          const latestPosts = await postApi.getAll({ 
+            orderby: '-createdDate',
+            limit: 50 
+          });
+          
+          if (latestPosts && latestPosts.length > 0) {
+            const processedLatestPosts: Post[] = latestPosts.map((post: any) => ({
+              id: post.id || post.ContentItemId,
+              title: post.title || 'Untitled',
+              content: post.content || '',
+              author_id: post.authorId || '',
+              author_name: post.authorId || 'Unknown',
+              author_email: post.authorId || '',
+              created_at: post.createdDate || post.created_at || new Date().toISOString(),
+              likes: post.likes || 0,
+              likes_count: post.likes || 0,
+              image_url: post.imageUrl || undefined,
+              category: undefined,
+              is_published: post.isPublished !== false
+            }));
+            setPosts(processedLatestPosts);
+          } else {
+            // Fallback to loader data if API fails
+            const processedPosts: Post[] = rawPosts.map((post: Post) => ({
+              ...post,
+              author_name: post.author_name || post.author_email || 'Unknown',
+              author_email: post.author_email || post.author_name || '',
+            }));
+            setPosts(processedPosts);
+          }
+        } catch (apiError) {
+          console.error('Error fetching latest posts from API:', apiError);
+          // Fallback to loader data
+          const processedPosts: Post[] = rawPosts.map((post: Post) => ({
+            ...post,
+            author_name: post.author_name || post.author_email || 'Unknown',
+            author_email: post.author_email || post.author_name || '',
+          }));
+          setPosts(processedPosts);
+        }
 
         // Fetch events
         try {
@@ -115,7 +162,7 @@ export default function ForYouPage() {
     };
 
     fetchData();
-  }, [rawPosts]);
+  }, [rawPosts, loaderData]);
 
   // Mix content from different sources
   useEffect(() => {
@@ -268,7 +315,12 @@ export default function ForYouPage() {
                               className="rounded mb-3 w-100"
                               style={{ maxHeight: '400px', objectFit: 'cover' }}
                               onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x400?text=Image+Not+Available';
+                                const img = e.target as HTMLImageElement;
+                                // Don't try to load placeholder if we're already on a placeholder or external URL
+                                if (!img.src.includes('via.placeholder.com') && !img.src.includes('data:')) {
+                                  // Hide the image instead of trying to load a placeholder that might fail
+                                  img.style.display = 'none';
+                                }
                               }}
                             />
                           )}
@@ -337,7 +389,9 @@ export default function ForYouPage() {
                               className="rounded mb-3 w-100"
                               style={{ maxHeight: '300px', objectFit: 'cover' }}
                               onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x300?text=Event+Image';
+                                const img = e.target as HTMLImageElement;
+                                // Hide the image instead of trying to load a placeholder that might fail
+                                img.style.display = 'none';
                               }}
                             />
                           )}
@@ -388,7 +442,9 @@ export default function ForYouPage() {
                               className="rounded mb-3 w-100"
                               style={{ maxHeight: '300px', objectFit: 'cover' }}
                               onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x300?text=Item+Image';
+                                const img = e.target as HTMLImageElement;
+                                // Hide the image instead of trying to load a placeholder that might fail
+                                img.style.display = 'none';
                               }}
                             />
                           )}

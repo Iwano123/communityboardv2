@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { chatApi } from '../utils/api';
 import type { User } from '../interfaces/BulletinBoard';
@@ -33,6 +34,7 @@ interface ChatRoom {
 export default function MessagesPage() {
   const { user, isAuthenticated } = useAuth();
   const { notifications, markAsRead } = useNotifications(user);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [selectedChatRoom, setSelectedChatRoom] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -48,16 +50,34 @@ export default function MessagesPage() {
   const eventSourceRef = useRef<EventSource | null>(null);
 
   // Markera meddelande-notifikationer som lästa när man kommer till Messages-sidan
+  // Använd useRef för att spåra om vi redan har markerat notifikationer för att undvika loops
+  const hasMarkedNotificationsRef = useRef(false);
+  
   useEffect(() => {
-    if (isAuthenticated && user && notifications.length > 0) {
+    if (isAuthenticated && user && notifications.length > 0 && !hasMarkedNotificationsRef.current) {
       const messageNotifications = notifications.filter(
         (n) => !n.read && (n.type === 'message' || n.link?.includes('/messages'))
       );
-      messageNotifications.forEach((notification) => {
-        markAsRead(notification.id);
-      });
+      
+      if (messageNotifications.length > 0) {
+        // Markera att vi har markerat notifikationer för att undvika loops
+        hasMarkedNotificationsRef.current = true;
+        
+        // Markera alla meddelande-notifikationer som lästa
+        Promise.all(messageNotifications.map(async (notification) => {
+          await markAsRead(notification.id);
+        })).then(() => {
+          // Reset ref efter en kort delay för att tillåta nya notifikationer att markeras senare
+          setTimeout(() => {
+            hasMarkedNotificationsRef.current = false;
+          }, 2000);
+        });
+      }
+    } else if (notifications.length === 0) {
+      // Reset ref när det inte finns några notifikationer
+      hasMarkedNotificationsRef.current = false;
     }
-  }, [isAuthenticated, user, notifications, markAsRead]);
+  }, [isAuthenticated, user, notifications.length]); // Removed markAsRead from dependencies to avoid infinite loops
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -69,6 +89,21 @@ export default function MessagesPage() {
       }
     };
   }, [isAuthenticated, user]);
+
+  // Hantera chatRoomId från URL-parametrar (t.ex. från notifikationer)
+  useEffect(() => {
+    const chatRoomIdFromUrl = searchParams.get('chatRoomId');
+    if (chatRoomIdFromUrl && chatRooms.length > 0) {
+      // Hitta konversationen med detta chatRoomId
+      const room = chatRooms.find(r => r.id === chatRoomIdFromUrl);
+      if (room && selectedChatRoom !== chatRoomIdFromUrl) {
+        console.log('Selecting chat room from URL:', chatRoomIdFromUrl);
+        setSelectedChatRoom(chatRoomIdFromUrl);
+        // Rensa URL-parametern efter att konversationen har valts
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [searchParams, chatRooms, selectedChatRoom, setSearchParams]);
 
   useEffect(() => {
     if (selectedChatRoom && user) {
