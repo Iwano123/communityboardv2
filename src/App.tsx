@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import Header from './partials/Header';
 import { PushNotificationPrompt } from './components/PushNotificationPrompt';
 import { registerServiceWorker } from './utils/pushNotifications';
-import type { User } from './interfaces/BulletinBoard';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-export default function App() {
-  const [user, setUser] = useState<User | null>(null);
+function AppContent() {
+  const { user, logout } = useAuth();
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Check localStorage for saved theme preference
     const savedTheme = localStorage.getItem('darkMode');
@@ -32,41 +32,32 @@ export default function App() {
     localStorage.setItem('darkMode', isDarkMode.toString());
   }, [isDarkMode]);
 
-  // Check login status on mount
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        const response = await fetch('/api/login', {
-          credentials: 'include'
-        });
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        } else {
-          // 500 status with "No user is logged in" is expected when not logged in
-          setUser(null);
-        }
-      } catch (error) {
-        // Network error - user not logged in
-        setUser(null);
-      }
-    };
-
-    checkLoginStatus();
-  }, []);
-
   // Register service worker on mount
   useEffect(() => {
     registerServiceWorker();
   }, []);
 
+  const handleSetUser = async (user: any) => {
+    if (user === null) {
+      await logout();
+    }
+  };
+
   return (
     <div className="d-flex flex-column min-vh-100">
-      <Header user={user} setUser={setUser} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
+      <Header user={user} setUser={handleSetUser} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
       <main className="flex-grow-1">
-        <Outlet context={[state, setState, user, setUser]} />
+        <Outlet context={[state, setState, user]} />
       </main>
       <PushNotificationPrompt user={user} />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

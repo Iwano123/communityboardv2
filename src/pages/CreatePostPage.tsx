@@ -1,22 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
-import { useStateContext } from '../utils/useStateObject';
+import { useAuth } from '../contexts/AuthContext';
+import { postApi } from '../utils/api';
 
 CreatePostPage.route = {
-  path: '/post/create',
-  index: 0,
+  path: '/create-post',
   parent: '/'
 };
 
 export default function CreatePostPage() {
   const navigate = useNavigate();
-  const context = useStateContext();
-  const [, , user] = context || [null, null, null];
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    category_id: 1,
     location: '',
     price: '',
     contact_info: '',
@@ -24,26 +22,12 @@ export default function CreatePostPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch('/api/categories');
-        if (response.ok) {
-          const data = await response.json();
-          setCategories(data);
-          // Set default category to first one
-          if (data.length > 0) {
-            setFormData(prev => ({ ...prev, category_id: data[0].id }));
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch categories:', err);
-      }
-    };
-    fetchCategories();
-  }, []);
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -55,30 +39,55 @@ export default function CreatePostPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      setError('You must be logged in to create a post');
+      return;
+    }
+    
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch('/api/posts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...formData,
-          author_id: user?.id,
-          price: formData.price ? parseFloat(formData.price) : null
-        }),
-      });
+      console.log('Creating post with data:', formData);
+      
+      const postData: any = {
+        title: formData.title,
+        content: formData.content,
+        authorId: user.email || `${user.firstName} ${user.lastName}`.trim(),
+        likes: 0,
+        isPublished: true,
+      };
 
-      if (response.ok) {
-        navigate('/');
-      } else {
-        setError('Failed to create post');
+      // Add image URL if provided (this field exists in Post content type)
+      if (formData.image_url) {
+        postData.imageUrl = formData.image_url;
       }
-    } catch (err) {
-      setError('Error creating post');
+
+      // Note: location, price, and contactInfo fields are not part of Post content type
+      // If you need these fields, they must be added to the Post content type in Orchard Core admin
+
+      console.log('Sending post data:', postData);
+      const result = await postApi.create(postData);
+      console.log('Post created successfully:', result);
+
+      // Navigate to for-you page after successful creation
+      navigate('/for-you');
+    } catch (err: any) {
+      console.error('Error creating post:', err);
+      
+      // Build detailed error message
+      let errorMessage = err?.message || err?.error || err?.data?.error || err?.data?.message || 'Error creating post. Please try again.';
+      
+      // If backend returned invalidFields or validFields, include them in the error message
+      if (err?.data?.invalidFields && Array.isArray(err.data.invalidFields) && err.data.invalidFields.length > 0) {
+        errorMessage += `\n\nInvalid fields: ${err.data.invalidFields.join(', ')}`;
+      }
+      
+      if (err?.data?.validFields && Array.isArray(err.data.validFields) && err.data.validFields.length > 0) {
+        errorMessage += `\n\nValid fields: ${err.data.validFields.join(', ')}`;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -94,7 +103,12 @@ export default function CreatePostPage() {
               <p className="text-twitter-secondary small">Share something with your community</p>
             </Card.Header>
             <Card.Body className="twitter-spacing">
-              {error && <Alert variant="danger" className="rounded-pill text-center">{error}</Alert>}
+              {error && (
+                <Alert variant="danger" className="mb-3" dismissible onClose={() => setError('')}>
+                  <Alert.Heading>Error</Alert.Heading>
+                  <div style={{ whiteSpace: 'pre-line' }}>{error}</div>
+                </Alert>
+              )}
               
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3">
@@ -124,21 +138,6 @@ export default function CreatePostPage() {
                   />
                 </Form.Group>
 
-                <Form.Group className="mb-3">
-                  <Form.Label className="fw-semibold text-twitter-dark">Category</Form.Label>
-                  <Form.Select
-                    name="category_id"
-                    value={formData.category_id}
-                    onChange={handleChange}
-                    className="form-control-twitter"
-                  >
-                    {categories.map((category: any) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
 
                 <Row>
                   <Col md={6}>
@@ -197,7 +196,7 @@ export default function CreatePostPage() {
                 <div className="d-flex justify-content-end gap-2">
                   <Button
                     variant="outline-secondary"
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate('/for-you')}
                     className="btn-twitter-outline"
                   >
                     Cancel

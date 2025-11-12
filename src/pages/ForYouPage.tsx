@@ -1,13 +1,10 @@
-import { useLoaderData, useNavigate, useSearchParams } from 'react-router-dom';
-import { Container, Row, Col, Form, Button, Card, Badge } from 'react-bootstrap';
-import { useStateContext } from '../utils/useStateObject';
-import Select from '../parts/Select';
-import PostCard from '../parts/PostCard';
-import postsLoader from '../utils/postsLoader';
-import { getHelpers } from '../utils/BulletinBoardHelpers';
 import { useState, useEffect } from 'react';
+import { useLoaderData, useRevalidator } from 'react-router-dom';
+import { Container, Row, Col, Card, Button, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import type { Post, Category, User } from '../interfaces/BulletinBoard';
+import { postApi, eventApi, marketplaceApi } from '../utils/api';
+import postsLoader from '../utils/postsLoader';
+import type { Post } from '../interfaces/BulletinBoard';
 
 ForYouPage.route = {
   path: "/for-you",
@@ -16,376 +13,547 @@ ForYouPage.route = {
   loader: postsLoader
 };
 
-type FeedType = 'all' | 'for-sale' | 'regular' | 'featured';
+// Helper function to format dates (similar to formatDistanceToNow from date-fns)
+function formatDistanceToNow(date: Date | string): string {
+  const now = new Date();
+  const then = new Date(date);
+  const diffInMs = now.getTime() - then.getTime();
+  const diffInSeconds = Math.floor(diffInMs / 1000);
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  if (diffInSeconds < 60) return 'just now';
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  if (diffInDays < 7) return `${diffInDays}d ago`;
+  if (diffInDays < 30) return `${Math.floor(diffInDays / 7)}w ago`;
+  if (diffInDays < 365) return `${Math.floor(diffInDays / 30)}mo ago`;
+  return `${Math.floor(diffInDays / 365)}y ago`;
+}
+
+// Generate avatar color from string
+function getAvatarColor(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash % 360);
+  return `hsl(${hue}, 70%, 50%)`;
+}
+
+interface MixedContent {
+  id: string;
+  type: 'post' | 'event' | 'marketplace';
+  title?: string;
+  content?: string;
+  description?: string;
+  image_url?: string;
+  authorId?: string;
+  author_name?: string;
+  author_email?: string;
+  created_at?: string;
+  likes?: number;
+  likes_count?: number;
+  price?: number;
+  location?: string;
+  event_date?: string;
+  category?: string;
+  condition?: string;
+}
 
 export default function ForYouPage() {
-  const loaderData = useLoaderData() as { posts: Post[] } | undefined;
-  const rawPosts = loaderData?.posts || [];
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const loaderData = useLoaderData() as { posts: Post[] };
+  const revalidator = useRevalidator();
+  const rawPosts = loaderData.posts;
   const [posts, setPosts] = useState<Post[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>([]);
+  const [mixedContent, setMixedContent] = useState<MixedContent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
 
-  // Debug: Log when component mounts
+  // Revalidate data when component mounts (to get newly created posts)
   useEffect(() => {
-    console.log('ForYouPage mounted, rawPosts:', rawPosts.length);
-  }, []);
-  
-  // Get initial tab from URL parameter
-  const tabParam = searchParams.get('tab') as FeedType;
-  const [activeTab, setActiveTab] = useState<FeedType>(
-    tabParam && ['all', 'for-sale', 'regular', 'featured'].includes(tabParam) 
-      ? tabParam 
-      : 'all'
-  );
-
-  // Get current user from context
-  const context = useStateContext();
-  const [, , user] = context || [null, null, null];
+    // Small delay to ensure backend has processed the new post
+    const timer = setTimeout(() => {
+      revalidator.revalidate();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [revalidator]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [categoriesResponse, usersResponse] = await Promise.all([
-          fetch('/api/categories', { credentials: 'include' }),
-          fetch('/api/users', { credentials: 'include' })
-        ]);
-
-        const categoriesData: Category[] = await categoriesResponse.json();
-        const usersData: User[] = await usersResponse.json();
-
-        setCategories(categoriesData);
-        setUsers(usersData);
-
-        // Join posts with categories and users
-        const joinedPosts: Post[] = rawPosts.map((post: any) => {
-          const category = categoriesData.find((cat: Category) => cat.id === post.category_id);
-          const author = usersData.find((user: User) => user.id === post.author_id);
+        // Also fetch posts directly from API to ensure we have the latest data
+        // This is especially important after creating a new post
+        try {
+          const latestPosts = await postApi.getAll({ 
+            orderby: '-createdDate',
+            limit: 50 
+          });
           
-          return {
+          if (latestPosts && latestPosts.length > 0) {
+            const processedLatestPosts: Post[] = latestPosts.map((post: any) => ({
+              id: post.id || post.ContentItemId,
+              title: post.title || 'Untitled',
+              content: post.content || '',
+              author_id: post.authorId || '',
+              author_name: post.authorId || 'Unknown',
+              author_email: post.authorId || '',
+              created_at: post.createdDate || post.created_at || new Date().toISOString(),
+              likes: post.likes || 0,
+              likes_count: post.likes || 0,
+              image_url: post.imageUrl || undefined,
+              category: undefined,
+              is_published: post.isPublished !== false
+            }));
+            setPosts(processedLatestPosts);
+          } else {
+            // Fallback to loader data if API fails
+            const processedPosts: Post[] = rawPosts.map((post: Post) => ({
+              ...post,
+              author_name: post.author_name || post.author_email || 'Unknown',
+              author_email: post.author_email || post.author_name || '',
+            }));
+            setPosts(processedPosts);
+          }
+        } catch (apiError) {
+          console.error('Error fetching latest posts from API:', apiError);
+          // Fallback to loader data
+          const processedPosts: Post[] = rawPosts.map((post: Post) => ({
             ...post,
-            category_name: category?.name || 'Unknown',
-            category_color: category?.color || '#1d9bf0',
-            author_name: author ? `${author.firstName} ${author.lastName}` : 'Unknown',
-            author_email: author?.email || '',
-            comments_count: post.comments_count || 0,
-            views: post.views || 0
-          };
-        });
+            author_name: post.author_name || post.author_email || 'Unknown',
+            author_email: post.author_email || post.author_name || '',
+          }));
+          setPosts(processedPosts);
+        }
 
-        setPosts(joinedPosts);
+        // Fetch events
+        try {
+          const eventsData = await eventApi.getAll({ 
+            where: 'isPublished=true', 
+            orderby: '-eventDate',
+            limit: 2 
+          });
+          setEvents(eventsData || []);
+        } catch (err) {
+          console.error('Error fetching events:', err);
+          setEvents([]);
+        }
+
+        // Fetch marketplace items
+        try {
+          const itemsData = await marketplaceApi.getAll({ 
+            where: 'isPublished=true AND isSold=false', 
+            orderby: '-createdDate',
+            limit: 2 
+          });
+          setItems(itemsData || []);
+        } catch (err) {
+          console.error('Error fetching marketplace items:', err);
+          setItems([]);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
-        setPosts(rawPosts);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [rawPosts]);
+  }, [rawPosts, loaderData]);
 
-  const { sortOptions, sortDescriptions } = getHelpers(posts);
+  // Mix content from different sources
+  useEffect(() => {
+    const mixed: MixedContent[] = [
+      ...(posts.slice(0, 3).map((post: Post) => ({ 
+        ...post, 
+        type: 'post' as const,
+        likes_count: post.views || 0
+      })) || []),
+      ...(events.slice(0, 2).map((event: any) => ({ 
+        ...event, 
+        type: 'event' as const 
+      })) || []),
+      ...(items.slice(0, 2).map((item: any) => ({ 
+        ...item, 
+        type: 'marketplace' as const 
+      })) || []),
+      ...(posts.slice(3, 5).map((post: Post) => ({ 
+        ...post, 
+        type: 'post' as const,
+        likes_count: post.views || 0
+      })) || []),
+    ];
+    setMixedContent(mixed);
+  }, [posts, events, items]);
 
-  // Get state object and setter from the outlet context
-  const contextState = useStateContext();
-  const [
-    { categoryChoice, sortChoice, searchTerm, showOnlyMyPosts },
-    setState
-  ] = contextState || [{ categoryChoice: 'All', sortChoice: 'Newest first', searchTerm: '', showOnlyMyPosts: false }, () => {}];
+  const toggleLike = (id: string) => {
+    setLikedPosts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
 
-  // Create categories list with counts
-  const categoriesWithCounts = categories.map(cat => ({
-    ...cat,
-    count: posts.filter(p => p.category_id === cat.id).length
-  }));
+  const trendingTopics = [
+    { tag: "#CommunityEvents", count: "2.5K posts" },
+    { tag: "#LocalMarket", count: "1.8K posts" },
+    { tag: "#MeetupSunday", count: "956 posts" },
+    { tag: "#OrchidLife", count: "743 posts" },
+  ];
 
-  // Filter posts based on active tab
-  const filteredByTab = posts.filter(post => {
-    if (activeTab === 'for-sale') {
-      return post.category_name?.toLowerCase().includes('sale') || 
-             post.title?.toLowerCase().includes('försäljning') ||
-             post.title?.toLowerCase().includes('säljes');
-    }
-    if (activeTab === 'regular') {
-      return !post.category_name?.toLowerCase().includes('sale') && 
-             !post.title?.toLowerCase().includes('försäljning') &&
-             !post.title?.toLowerCase().includes('säljes');
-    }
-    if (activeTab === 'featured') {
-      return post.featured === 1 || post.featured === true;
-    }
-    return true; // 'all' shows everything
-  });
-
-  // Filter posts based on category
-  const filteredByCategory = categoryChoice === 'All' 
-    ? filteredByTab 
-    : filteredByTab.filter(post => post.category_name === categoryChoice);
-
-  // Filter posts based on search term
-  const filteredBySearch = searchTerm 
-    ? filteredByCategory.filter(post => 
-        post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.category_name?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : filteredByCategory;
-
-  // Filter posts to show only user's posts if enabled
-  const filteredPosts = showOnlyMyPosts && user
-    ? filteredBySearch.filter(post => post.author_id === user.id)
-    : filteredBySearch;
-
-  // Sort posts
-  const sortedPosts = [...filteredPosts].sort((a, b) => {
-    switch (sortChoice) {
-      case 'Newest first':
-        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-      case 'Oldest first':
-        return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
-      case 'Most views':
-        return (b.views || 0) - (a.views || 0);
-      case 'Most comments':
-        return (b.comments_count || 0) - (a.comments_count || 0);
-      default:
-        return 0;
-    }
-  });
-
-  // Count posts by type
-  const salesPosts = posts.filter(p => 
-    p.category_name?.toLowerCase().includes('sale') || 
-    p.title?.toLowerCase().includes('försäljning') ||
-    p.title?.toLowerCase().includes('säljes')
-  ).length;
-
-  const regularPosts = posts.filter(p => 
-    !p.category_name?.toLowerCase().includes('sale') && 
-    !p.title?.toLowerCase().includes('försäljning') &&
-    !p.title?.toLowerCase().includes('säljes')
-  ).length;
-
-  const featuredPosts = posts.filter(p => p.featured === 1 || p.featured === true).length;
-
-  // Get suggested users (users who have posted but not the current user)
-  const suggestedUsers = users
-    .filter(u => u.id !== user?.id && posts.some(p => p.author_id === u.id))
-    .slice(0, 5);
+  const suggestedUsers = [
+    { name: "Sarah Johnson", handle: "@sarahj", followers: "1.2K" },
+    { name: "Mike Chen", handle: "@mikec", followers: "856" },
+    { name: "Emma Wilson", handle: "@emmaw", followers: "2.1K" },
+  ];
 
   if (loading) {
     return (
-      <Container className="mt-4">
-        <div className="text-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Loading...</span>
+      <div className="min-h-screen for-you-page">
+        <Container className="py-5">
+          <div className="text-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
           </div>
-        </div>
-      </Container>
+        </Container>
+      </div>
     );
   }
 
   return (
-    <Container className="mt-4">
-      <Row>
-        {/* Main Feed */}
-        <Col lg={6}>
-          <Card className="card-twitter mb-3">
-            <Card.Body className="twitter-spacing">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <h4 className="fw-bold mb-0 text-twitter-dark">For You</h4>
-              </div>
+    <div className="min-h-screen for-you-page">
+      <Container className="py-4" style={{ maxWidth: '1200px' }}>
+        {/* Header */}
+        <div className="mb-4">
+          <div className="d-flex align-items-center gap-3 mb-2">
+            <i className="bi bi-stars for-you-icon"></i>
+            <h1 className="mb-0 for-you-title">
+              For You
+            </h1>
+          </div>
+          <p className="text-muted">Personalized content based on your interests and activity</p>
+        </div>
 
-              {/* Tabs */}
-              <div className="d-flex gap-2 mb-3 flex-wrap">
-                <Button
-                  variant={activeTab === 'all' ? 'primary' : 'outline-primary'}
-                  size="sm"
-                  className="btn-twitter"
-                  onClick={() => {
-                    setActiveTab('all');
-                    navigate('/for-you', { replace: true });
-                  }}
-                >
-                  All ({posts.length})
-                </Button>
-                <Button
-                  variant={activeTab === 'for-sale' ? 'primary' : 'outline-primary'}
-                  size="sm"
-                  className="btn-twitter-outline"
-                  onClick={() => {
-                    setActiveTab('for-sale');
-                    navigate('/for-you?tab=for-sale', { replace: true });
-                  }}
-                >
-                  For Sale ({salesPosts})
-                </Button>
-                <Button
-                  variant={activeTab === 'regular' ? 'primary' : 'outline-primary'}
-                  size="sm"
-                  className="btn-twitter-outline"
-                  onClick={() => {
-                    setActiveTab('regular');
-                    navigate('/for-you?tab=regular', { replace: true });
-                  }}
-                >
-                  Regular ({regularPosts})
-                </Button>
-                {featuredPosts > 0 && (
-                  <Button
-                    variant={activeTab === 'featured' ? 'primary' : 'outline-primary'}
-                    size="sm"
-                    className="btn-twitter-outline"
-                    onClick={() => {
-                      setActiveTab('featured');
-                      navigate('/for-you?tab=featured', { replace: true });
-                    }}
-                  >
-                    ⭐ Featured ({featuredPosts})
-                  </Button>
-                )}
-              </div>
-
-              {/* Filters */}
-              <div className="d-flex gap-2 mb-3 flex-wrap">
-                <Select
-                  value={categoryChoice}
-                  onChange={(e) => setState({ categoryChoice: e.target.value })}
-                  options={['All', ...categoriesWithCounts.map(c => `${c.name} (${c.count})`)]}
-                  className="form-select-twitter"
-                />
-                <Select
-                  value={sortChoice}
-                  onChange={(e) => setState({ sortChoice: e.target.value })}
-                  options={sortOptions}
-                  className="form-select-twitter"
-                />
-                <Form.Control
-                  type="text"
-                  placeholder="Search posts..."
-                  value={searchTerm}
-                  onChange={(e) => setState({ searchTerm: e.target.value })}
-                  className="form-control-twitter"
-                />
-              </div>
-
-              {/* Show only my posts toggle */}
-              {user && (
-                <Form.Check
-                  type="checkbox"
-                  label="Show only my posts"
-                  checked={showOnlyMyPosts}
-                  onChange={(e) => setState({ showOnlyMyPosts: e.target.checked })}
-                  className="mb-3"
-                />
-              )}
-
-              {/* Posts */}
-              {sortedPosts.length === 0 ? (
-                <div className="text-center py-5">
-                  <p className="text-twitter-secondary">No posts found. Be the first to post!</p>
-                  <Link to="/create-post">
-                    <Button variant="primary" className="btn-twitter mt-2">
-                      Create Post
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="d-flex flex-column gap-3">
-                  {sortedPosts.map((post) => (
-                    <PostCard key={post.id} post={post} />
-                  ))}
-                </div>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-
-        {/* Right Sidebar */}
-        <Col lg={3}>
-          {/* Quick Actions */}
-          <Card className="card-twitter mb-3">
-            <Card.Body className="twitter-spacing">
-              <h6 className="fw-bold mb-3 text-twitter-dark">Quick Actions</h6>
-              <div className="d-grid gap-2">
-                <Link to="/create-post">
-                  <Button variant="primary" className="btn-twitter w-100">
-                    ✨ Create Post
-                  </Button>
-                </Link>
-                {salesPosts > 0 && (
-                  <Button 
-                    variant={activeTab === 'for-sale' ? 'primary' : 'outline-primary'}
-                    className="btn-twitter-outline w-100"
-                    onClick={() => {
-                      setActiveTab('for-sale');
-                      navigate('/for-you?tab=for-sale', { replace: true });
-                    }}
-                  >
-                    🛒 Browse Sales ({salesPosts})
-                  </Button>
-                )}
-              </div>
-            </Card.Body>
-          </Card>
-
-          {/* Suggested Users */}
-          {suggestedUsers.length > 0 && (
-            <Card className="card-twitter mb-3">
-              <Card.Body className="twitter-spacing">
-                <h6 className="fw-bold mb-3 text-twitter-dark">Suggested Users</h6>
-                <div className="d-flex flex-column gap-2">
-                  {suggestedUsers.map((suggestedUser) => (
-                    <Link
-                      key={suggestedUser.id}
-                      to={`/profile?user=${suggestedUser.id}`}
-                      className="text-decoration-none"
-                    >
-                      <div className="d-flex align-items-center gap-2 p-2 rounded hover-bg">
-                        <div className="avatar-circle bg-primary text-white">
-                          {suggestedUser.firstName?.[0]}{suggestedUser.lastName?.[0]}
-                        </div>
-                        <div>
-                          <div className="fw-semibold text-twitter-dark">
-                            {suggestedUser.firstName} {suggestedUser.lastName}
-                          </div>
-                        </div>
-                      </div>
+        <Row>
+          {/* Main Feed */}
+          <Col lg={8}>
+            <div className="d-flex flex-column gap-4">
+              {mixedContent.length === 0 ? (
+                <Card className="text-center py-5">
+                  <Card.Body>
+                    <i className="bi bi-inbox for-you-empty-icon"></i>
+                    <h5 className="mt-3">No content yet</h5>
+                    <p className="text-muted">Be the first to share something!</p>
+                    <Link to="/create-post">
+                      <Button variant="primary" className="mt-2">
+                        Create Post
+                      </Button>
                     </Link>
-                  ))}
-                </div>
-              </Card.Body>
-            </Card>
-          )}
+                  </Card.Body>
+                </Card>
+              ) : (
+                mixedContent.map((item, index) => (
+                  <Card 
+                    key={`${item.type}-${item.id}`} 
+                    className="shadow-sm"
+                    style={{ 
+                      transition: 'all 0.3s',
+                      animationDelay: `${index * 50}ms`
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                    }}
+                  >
+                    {item.type === 'post' && (
+                      <>
+                        <Card.Header className="bg-white border-bottom for-you-card-header">
+                          <div className="d-flex align-items-start gap-3">
+                            <div
+                              className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                              style={{
+                                width: '48px',
+                                height: '48px',
+                                backgroundColor: getAvatarColor(item.author_email || item.authorId || 'user'),
+                                fontSize: '20px',
+                                flexShrink: 0
+                              }}
+                            >
+                              {item.author_name?.charAt(0)?.toUpperCase() || 'U'}
+                            </div>
+                            <div className="flex-grow-1">
+                              <div className="d-flex align-items-center gap-2 mb-1">
+                                <span className="fw-semibold">
+                                  {item.author_name || `User ${(item.authorId || item.id)?.toString().substring(0, 8)}`}
+                                </span>
+                                <Badge bg="secondary" className="text-xs">Post</Badge>
+                              </div>
+                              <p className="text-muted small mb-0">
+                                {item.created_at ? formatDistanceToNow(item.created_at) : 'recently'}
+                              </p>
+                            </div>
+                          </div>
+                        </Card.Header>
+                        <Card.Body>
+                          <p className="mb-3" style={{ whiteSpace: 'pre-wrap' }}>
+                            {item.content || item.title}
+                          </p>
+                          {item.image_url && (
+                            <img
+                              src={item.image_url}
+                              alt="Post"
+                              className="rounded mb-3 w-100"
+                              style={{ maxHeight: '400px', objectFit: 'cover' }}
+                              onError={(e) => {
+                                const img = e.target as HTMLImageElement;
+                                // Don't try to load placeholder if we're already on a placeholder or external URL
+                                if (!img.src.includes('via.placeholder.com') && !img.src.includes('data:')) {
+                                  // Hide the image instead of trying to load a placeholder that might fail
+                                  img.style.display = 'none';
+                                }
+                              }}
+                            />
+                          )}
+                          <div className="d-flex align-items-center gap-4 pt-2">
+                            <Button
+                              variant="link"
+                              size="sm"
+                              onClick={() => toggleLike(item.id)}
+                              className="text-decoration-none p-0 d-flex align-items-center gap-2"
+                              style={{ 
+                                color: likedPosts.has(item.id) ? '#dc3545' : '#6c757d'
+                              }}
+                            >
+                              <i className={`bi ${likedPosts.has(item.id) ? 'bi-heart-fill' : 'bi-heart'}`}></i>
+                              <span className="small">{item.likes_count || 0}</span>
+                            </Button>
+                            <Link 
+                              to={`/post/${item.id}`}
+                              className="text-decoration-none text-muted d-flex align-items-center gap-2"
+                            >
+                              <i className="bi bi-chat"></i>
+                              <span className="small">Reply</span>
+                            </Link>
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="text-decoration-none text-muted p-0 d-flex align-items-center gap-2"
+                            >
+                              <i className="bi bi-share"></i>
+                              <span className="small">Share</span>
+                            </Button>
+                          </div>
+                        </Card.Body>
+                      </>
+                    )}
 
-          {/* Categories */}
-          {categoriesWithCounts.length > 0 && (
-            <Card className="card-twitter mb-3">
-              <Card.Body className="twitter-spacing">
-                <h6 className="fw-bold mb-3 text-twitter-dark">Categories</h6>
-                <div className="d-flex flex-wrap gap-2">
-                  {categoriesWithCounts.map((category) => (
-                    <Badge
-                      key={category.id}
-                      bg="secondary"
-                      className="cursor-pointer"
-                      onClick={() => setState({ categoryChoice: category.name })}
-                      style={{
-                        backgroundColor: category.color || '#6c757d',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {category.name} ({category.count})
-                    </Badge>
-                  ))}
-                </div>
-              </Card.Body>
-            </Card>
-          )}
-        </Col>
-      </Row>
-    </Container>
+                    {item.type === 'event' && (
+                      <>
+                        <Card.Header className="bg-white border-bottom for-you-card-header">
+                          <div className="d-flex align-items-start gap-3">
+                            <div 
+                              className="rounded d-flex align-items-center justify-content-center"
+                              style={{
+                                width: '48px',
+                                height: '48px',
+                                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                                flexShrink: 0
+                              }}
+                            >
+                              <i className="bi bi-calendar-event" style={{ fontSize: '24px', color: '#0d6efd' }}></i>
+                            </div>
+                            <div className="flex-grow-1">
+                              <div className="d-flex align-items-center gap-2 mb-1">
+                                <Badge bg="secondary" className="text-xs">Event</Badge>
+                              </div>
+                              <h5 className="fw-semibold mb-0 mt-1">{item.title}</h5>
+                            </div>
+                          </div>
+                        </Card.Header>
+                        <Card.Body>
+                          <p className="text-muted mb-3">{item.description}</p>
+                          {item.image_url && (
+                            <img
+                              src={item.image_url}
+                              alt={item.title}
+                              className="rounded mb-3 w-100"
+                              style={{ maxHeight: '300px', objectFit: 'cover' }}
+                              onError={(e) => {
+                                const img = e.target as HTMLImageElement;
+                                // Hide the image instead of trying to load a placeholder that might fail
+                                img.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <div className="d-flex align-items-center gap-4 text-muted small mb-3">
+                            <span>📍 {item.location || 'TBA'}</span>
+                            <span>📅 {item.event_date ? new Date(item.event_date).toLocaleDateString() : 'TBA'}</span>
+                          </div>
+                          <Link to="/events">
+                            <Button variant="outline-primary" className="w-100">
+                              View Event Details
+                            </Button>
+                          </Link>
+                        </Card.Body>
+                      </>
+                    )}
+
+                    {item.type === 'marketplace' && (
+                      <>
+                        <Card.Header className="bg-white border-bottom for-you-card-header">
+                          <div className="d-flex align-items-start gap-3">
+                            <div 
+                              className="rounded d-flex align-items-center justify-content-center"
+                              style={{
+                                width: '48px',
+                                height: '48px',
+                                backgroundColor: 'rgba(111, 66, 193, 0.1)',
+                                flexShrink: 0
+                              }}
+                            >
+                              <i className="bi bi-bag" style={{ fontSize: '24px', color: '#6f42c1' }}></i>
+                            </div>
+                            <div className="flex-grow-1">
+                              <div className="d-flex align-items-center gap-2 mb-1">
+                                <Badge bg="secondary" className="text-xs">Marketplace</Badge>
+                                {item.price && (
+                                  <Badge bg="success" className="text-xs">${item.price}</Badge>
+                                )}
+                              </div>
+                              <h5 className="fw-semibold mb-0 mt-1">{item.title}</h5>
+                            </div>
+                          </div>
+                        </Card.Header>
+                        <Card.Body>
+                          {item.image_url && (
+                            <img
+                              src={item.image_url}
+                              alt={item.title}
+                              className="rounded mb-3 w-100"
+                              style={{ maxHeight: '300px', objectFit: 'cover' }}
+                              onError={(e) => {
+                                const img = e.target as HTMLImageElement;
+                                // Hide the image instead of trying to load a placeholder that might fail
+                                img.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <p className="text-muted mb-3" style={{ 
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden'
+                          }}>
+                            {item.description}
+                          </p>
+                          <div className="d-flex align-items-center gap-2 mb-3">
+                            {item.category && (
+                              <Badge variant="outline" className="text-xs">{item.category}</Badge>
+                            )}
+                            {item.condition && (
+                              <Badge variant="outline" className="text-xs">{item.condition}</Badge>
+                            )}
+                          </div>
+                          <Link to="/marketplace">
+                            <Button variant="outline-primary" className="w-100">
+                              View in Marketplace
+                            </Button>
+                          </Link>
+                        </Card.Body>
+                      </>
+                    )}
+                  </Card>
+                ))
+              )}
+            </div>
+          </Col>
+
+          {/* Sidebar */}
+          <Col lg={4}>
+            <div className="position-sticky" style={{ top: '80px' }}>
+              <div className="d-flex flex-column gap-4">
+                {/* Trending Topics */}
+                <Card>
+                  <Card.Header className="bg-white border-bottom for-you-card-header">
+                    <div className="d-flex align-items-center gap-2">
+                      <i className="bi bi-graph-up-arrow" style={{ color: '#0d6efd' }}></i>
+                      <h6 className="mb-0 fw-semibold">Trending on Orchid</h6>
+                    </div>
+                  </Card.Header>
+                  <Card.Body>
+                    <div className="d-flex flex-column gap-3">
+                      {trendingTopics.map((topic) => (
+                        <div 
+                          key={topic.tag}
+                          className="p-2 rounded"
+                          style={{ cursor: 'pointer', transition: 'background-color 0.2s' }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          <p className="fw-medium text-primary mb-0 small">{topic.tag}</p>
+                          <p className="text-muted small mb-0">{topic.count}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </Card.Body>
+                </Card>
+
+                {/* Suggested Users */}
+                <Card>
+                  <Card.Header className="bg-white border-bottom for-you-card-header">
+                    <div className="d-flex align-items-center gap-2">
+                      <i className="bi bi-people" style={{ color: '#0d6efd' }}></i>
+                      <h6 className="mb-0 fw-semibold">Who to Follow</h6>
+                    </div>
+                  </Card.Header>
+                  <Card.Body>
+                    <div className="d-flex flex-column gap-4">
+                      {suggestedUsers.map((user) => (
+                        <div key={user.handle} className="d-flex align-items-center justify-content-between">
+                          <div className="d-flex align-items-center gap-3">
+                            <div
+                              className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                              style={{
+                                width: '40px',
+                                height: '40px',
+                                backgroundColor: getAvatarColor(user.handle),
+                                fontSize: '18px'
+                              }}
+                            >
+                              {user.name.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="fw-medium small mb-0">{user.name}</p>
+                              <p className="text-muted small mb-0">{user.handle}</p>
+                            </div>
+                          </div>
+                          <Button size="sm" variant="outline-primary">
+                            Follow
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </Card.Body>
+                </Card>
+              </div>
+            </div>
+          </Col>
+        </Row>
+      </Container>
+    </div>
   );
 }

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Card, Form, Button, Alert } from 'react-bootstrap';
-import { useStateContext } from '../utils/useStateObject';
-import { formatDate } from '../utils/bulletinBoardHelpers';
-import type { Comment, User } from '../interfaces/BulletinBoard';
+import { useAuth } from '../contexts/AuthContext';
+import { commentApi } from '../utils/api';
+import { formatDate } from '../utils/BulletinBoardHelpers';
+import type { Comment } from '../interfaces/BulletinBoard';
 
 interface CommentsSectionProps {
-  postId: number;
+  postId: string | number;
   comments: Comment[];
   onCommentAdded: () => void;
 }
@@ -15,97 +16,52 @@ interface CommentWithAuthor extends Comment {
 }
 
 export default function CommentsSection({ postId, comments, onCommentAdded }: CommentsSectionProps) {
-  const context = useStateContext();
-  const [, , user] = context || [null, null, null];
+  const { user } = useAuth();
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [commentsWithAuthors, setCommentsWithAuthors] = useState<CommentWithAuthor[]>([]);
 
-  // Fetch author names for comments
+  // Map comments to include author names
   useEffect(() => {
-    const fetchAuthorNames = async () => {
-      const commentsWithNames = await Promise.all(
-        comments.map(async (comment) => {
-          try {
-            const response = await fetch(`/api/users/${comment.author_id}`, {
-              credentials: 'include'
-            });
-            if (response.ok) {
-              const author: User = await response.json();
-              return {
-                ...comment,
-                author_name: `${author.firstName} ${author.lastName}`.trim()
-              };
-            }
-          } catch (err) {
-            console.error('Error fetching author:', err);
-          }
-          return {
-            ...comment,
-            author_name: 'Unknown User'
-          };
-        })
-      );
-      setCommentsWithAuthors(commentsWithNames);
-    };
-
-    if (comments.length > 0) {
-      fetchAuthorNames();
-    } else {
-      setCommentsWithAuthors([]);
-    }
+    const mappedComments = comments.map((comment: any) => ({
+      ...comment,
+      author_name: comment.authorId || comment.author_name || 'Unknown User',
+      author_id: 0, // Backend doesn't use numeric IDs
+    }));
+    setCommentsWithAuthors(mappedComments);
   }, [comments]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !user) return;
 
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch('/api/comments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          post_id: postId,
-          author_id: user.id,
-          content: newComment.trim()
-        }),
+      await commentApi.create({
+        title: 'Comment',
+        content: newComment.trim(),
+        postId: postId.toString(),
+        authorId: user.email || user.firstName + ' ' + user.lastName,
       });
 
-      if (response.ok) {
-        setNewComment('');
-        onCommentAdded(); // Refresh comments
-      } else {
-        const data = await response.json();
-        setError(data.error || 'Failed to add comment');
-      }
-    } catch (err) {
-      setError('Network error. Please try again.');
+      setNewComment('');
+      onCommentAdded(); // Refresh comments
+    } catch (err: any) {
+      setError(err.message || 'Failed to add comment');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteComment = async (commentId: number) => {
+  const handleDeleteComment = async (commentId: string | number) => {
     if (!confirm('Are you sure you want to delete this comment?')) return;
 
     try {
-      const response = await fetch(`/api/comments/${commentId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        onCommentAdded(); // Refresh comments
-      } else {
-        alert('Failed to delete comment');
-      }
+      await commentApi.delete(commentId.toString());
+      onCommentAdded(); // Refresh comments
     } catch (error) {
       console.error('Error deleting comment:', error);
       alert('Error deleting comment');
@@ -129,7 +85,7 @@ export default function CommentsSection({ postId, comments, onCommentAdded }: Co
                     <strong>{comment.author_name || 'Unknown User'}</strong>
                     <small className="text-muted ms-2">{formatDate(comment.created_at)}</small>
                   </div>
-                  {(user?.id === comment.author_id || user?.role === 'admin') && (
+                  {(user && ((comment.authorId === user.email || comment.author_name === `${user.firstName} ${user.lastName}`) || user.role === 'admin')) && (
                     <Button 
                       variant="outline-danger" 
                       size="sm"

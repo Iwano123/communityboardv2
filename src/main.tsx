@@ -4,7 +4,8 @@ import routes from './routes';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
 import '../sass/index.scss';
-
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 const router = createBrowserRouter([
   {

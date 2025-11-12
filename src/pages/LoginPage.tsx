@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useNavigate, Link, useOutletContext } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
+import { useAuth } from '../contexts/AuthContext';
 import type { User } from '../interfaces/BulletinBoard';
 
 LoginPage.route = {
@@ -10,8 +11,8 @@ LoginPage.route = {
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [, , , setUser] = useOutletContext<[any, any, User | null, (user: User | null) => void]>();
-  const [email, setEmail] = useState('');
+  const { login } = useAuth();
+  const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -22,23 +23,39 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ usernameOrEmail, password }),
       });
 
       if (response.ok) {
-        const user = await response.json();
-        setUser(user);
-        // Clear viewed posts from localStorage on login
-        localStorage.removeItem('viewedPosts');
-        navigate('/');
+        const data = await response.json();
+        // Backend returns user data directly when successful (has username or email)
+        if (data && (data.username || data.email || data.id)) {
+          // Map backend user to BulletinBoard User interface
+          const mappedUser: User = {
+            id: 0,
+            firstName: data.firstName || (data.username ? data.username.split(' ')[0] : '') || '',
+            lastName: data.lastName || (data.username ? data.username.split(' ').slice(1).join(' ') : '') || '',
+            email: data.email || data.username || '',
+            role: (Array.isArray(data.roles) && data.roles.includes('Administrator')) ? 'admin' : 
+                  (Array.isArray(data.roles) && data.roles.includes('Moderator')) ? 'moderator' : 'user',
+            created: new Date().toISOString(),
+          };
+          login(mappedUser);
+          // Clear viewed posts from localStorage on login
+          localStorage.removeItem('viewedPosts');
+          navigate('/');
+        } else {
+          setError('Invalid username or password');
+        }
       } else {
-        setError('Invalid email or password');
+        const errorData = await response.json().catch(() => ({ message: 'Invalid username or password' }));
+        setError(errorData.message || 'Invalid username or password');
       }
     } catch (err) {
       setError('Error logging in');
@@ -74,13 +91,13 @@ export default function LoginPage() {
               
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3">
-                  <Form.Label className="fw-semibold text-twitter-dark">Email</Form.Label>
+                  <Form.Label className="fw-semibold text-twitter-dark">Username or Email</Form.Label>
                   <Form.Control
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text"
+                    value={usernameOrEmail}
+                    onChange={(e) => setUsernameOrEmail(e.target.value)}
                     required
-                    placeholder="Enter your email"
+                    placeholder="Enter your username or email"
                     className="form-control-twitter"
                   />
                 </Form.Group>

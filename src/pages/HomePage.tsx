@@ -28,7 +28,7 @@ const Home = () => {
             Share your thoughts, connect with others, discover events, buy and sell in the marketplace, and build your community.
           </p>
           <div className="hero-buttons">
-            <Link to="/community">
+            <Link to="/for-you">
               <Button size="lg" className="hero-btn-primary">
                 Explore Orchid
                 <i className="bi bi-arrow-right ms-2 hero-icon-hover"></i>

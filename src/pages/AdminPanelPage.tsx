@@ -1,20 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Button, Badge, Alert } from 'react-bootstrap';
+import { postApi } from '../utils/api';
+import { mapBackendPostToFrontend } from '../utils/dataMapper';
+import type { Post } from '../interfaces/BulletinBoard';
 
-interface User {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-}
-
-interface Post {
-  id: number;
-  title: string;
-  author_name: string;
-  category_name: string;
-}
+// Note: User management endpoints don't exist in the backend
+// This page shows posts only
 
 AdminPanelPage.route = {
   path: '/admin',
@@ -23,7 +14,6 @@ AdminPanelPage.route = {
 };
 
 export default function AdminPanelPage() {
-  const [users, setUsers] = useState<User[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,21 +21,12 @@ export default function AdminPanelPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [usersResponse, postsResponse] = await Promise.all([
-          fetch('/api/users'),
-          fetch('/api/posts')
-        ]);
-
-        if (usersResponse.ok && postsResponse.ok) {
-          const usersData = await usersResponse.json();
-          const postsData = await postsResponse.json();
-          setUsers(usersData);
-          setPosts(postsData);
-        } else {
-          setError('Failed to load data');
-        }
+        const backendPosts = await postApi.getAll({ orderby: '-createdDate' });
+        const mappedPosts = backendPosts.map(mapBackendPostToFrontend);
+        setPosts(mappedPosts);
       } catch (err) {
-        setError('Error loading data');
+        setError('Error loading posts');
+        console.error('Error loading posts:', err);
       } finally {
         setLoading(false);
       }
@@ -54,32 +35,14 @@ export default function AdminPanelPage() {
     fetchData();
   }, []);
 
-  const handleDeleteUser = async (userId: number) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      try {
-        const response = await fetch(`/api/users/${userId}`, {
-          method: 'DELETE'
-        });
-        if (response.ok) {
-          setUsers(users.filter(user => user.id !== userId));
-        }
-      } catch (err) {
-        console.error('Error deleting user:', err);
-      }
-    }
-  };
-
-  const handleDeletePost = async (postId: number) => {
+  const handleDeletePost = async (postId: string | number) => {
     if (window.confirm('Are you sure you want to delete this post?')) {
       try {
-        const response = await fetch(`/api/posts/${postId}`, {
-          method: 'DELETE'
-        });
-        if (response.ok) {
-          setPosts(posts.filter(post => post.id !== postId));
-        }
+        await postApi.delete(String(postId));
+        setPosts(posts.filter(post => String(post.id) !== String(postId)));
       } catch (err) {
         console.error('Error deleting post:', err);
+        alert('Failed to delete post');
       }
     }
   };
@@ -104,87 +67,64 @@ export default function AdminPanelPage() {
           
           {error && <Alert variant="danger">{error}</Alert>}
 
-          <Row>
-            <Col lg={6} className="mb-4">
-              <Card className="card-twitter">
-                <Card.Header className="border-0">
-                  <h5 className="text-twitter-dark mb-0">Users</h5>
-                </Card.Header>
-                <Card.Body className="twitter-spacing">
-                  <div className="table-responsive">
-                    <Table hover>
-                      <thead>
-                        <tr>
-                          <th>Name</th>
-                          <th>Email</th>
-                          <th>Role</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {users.map(user => (
-                          <tr key={user.id}>
-                            <td>{user.firstName} {user.lastName}</td>
-                            <td>{user.email}</td>
-                            <td>
-                              <Badge bg={user.role === 'admin' ? 'danger' : 'primary'}>
-                                {user.role}
-                              </Badge>
-                            </td>
-                            <td>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                onClick={() => handleDeleteUser(user.id)}
-                              >
-                                Delete
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
+          <Alert variant="info" className="mb-4">
+            <strong>Note:</strong> User management endpoints are not available in the backend. 
+            Only post management is available.
+          </Alert>
 
-            <Col lg={6} className="mb-4">
+          <Row>
+            <Col lg={12} className="mb-4">
               <Card className="card-twitter">
                 <Card.Header className="border-0">
-                  <h5 className="text-twitter-dark mb-0">Posts</h5>
+                  <h5 className="text-twitter-dark mb-0">Posts Management</h5>
                 </Card.Header>
                 <Card.Body className="twitter-spacing">
-                  <div className="table-responsive">
-                    <Table hover>
-                      <thead>
-                        <tr>
-                          <th>Title</th>
-                          <th>Author</th>
-                          <th>Category</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {posts.map(post => (
-                          <tr key={post.id}>
-                            <td>{post.title}</td>
-                            <td>{post.author_name}</td>
-                            <td>{post.category_name}</td>
-                            <td>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                onClick={() => handleDeletePost(post.id)}
-                              >
-                                Delete
-                              </Button>
-                            </td>
+                  {posts.length === 0 ? (
+                    <div className="text-center py-4">
+                      <p className="text-muted">No posts found</p>
+                    </div>
+                  ) : (
+                    <div className="table-responsive">
+                      <Table hover>
+                        <thead>
+                          <tr>
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>Content Preview</th>
+                            <th>Created</th>
+                            <th>Actions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {posts.map(post => (
+                            <tr key={post.id}>
+                              <td>{post.title || 'Untitled'}</td>
+                              <td>{post.author_name || post.author_email || 'Unknown'}</td>
+                              <td>
+                                <small className="text-muted">
+                                  {post.content ? post.content.substring(0, 50) + '...' : 'No content'}
+                                </small>
+                              </td>
+                              <td>
+                                <small className="text-muted">
+                                  {post.created_at ? new Date(post.created_at).toLocaleDateString() : 'N/A'}
+                                </small>
+                              </td>
+                              <td>
+                                <Button
+                                  variant="outline-danger"
+                                  size="sm"
+                                  onClick={() => handleDeletePost(post.id)}
+                                >
+                                  Delete
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </div>
+                  )}
                 </Card.Body>
               </Card>
             </Col>

@@ -6,7 +6,6 @@ import HomePage from './pages/HomePage.tsx';
 import AboutPage from './pages/AboutPage.tsx';
 import NotFoundPage from './pages/NotFoundPage.tsx';
 import OurVisionPage from './pages/OurVisionPage.tsx';
-import BulletinBoardPage from './pages/BulletinBoardPage.tsx';
 import FeaturedPostsPage from './pages/FeaturedPostsPage.tsx';
 import PostDetailsPage from './pages/PostDetailsPage.tsx';
 import CreatePostPage from './pages/CreatePostPage.tsx';
@@ -15,18 +14,16 @@ import AdminPanelPage from './pages/AdminPanelPage.tsx';
 import LoginPage from './pages/LoginPage.tsx';
 import RegisterPage from './pages/RegisterPage.tsx';
 import ProfilePage from './pages/ProfilePage.tsx';
-import ChatPage from './pages/ChatPage.tsx';
+import MessagesPage from './pages/MessagesPage.tsx';
 import ForYouPage from './pages/ForYouPage.tsx';
 import EventsPage from './pages/EventsPage.tsx';
 import MarketplacePage from './pages/MarketplacePage.tsx';
-import CommunityFeedPage from './pages/CommunityFeedPage.tsx';
 
 export default [
   HomePage,
   AboutPage,
   NotFoundPage,
   OurVisionPage,
-  BulletinBoardPage,
   FeaturedPostsPage,
   PostDetailsPage,
   CreatePostPage,
@@ -35,11 +32,10 @@ export default [
   LoginPage,
   RegisterPage,
   ProfilePage,
-  ChatPage,
+  MessagesPage,
   ForYouPage,
   EventsPage,
-  MarketplacePage,
-  CommunityFeedPage
+  MarketplacePage
 ]
   // map the route property of each page component to a Route
   .map(x => {
