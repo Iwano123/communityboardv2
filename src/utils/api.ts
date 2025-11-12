@@ -185,13 +185,76 @@ export const chatApi = {
   },
 
   getByChatRoom: async (chatRoomId: string) => {
-    const result = await apiRequest<any>(`/Chat?where=chatRoomId=${chatRoomId}&orderby=createdDate`);
+    // URL-encode chatRoomId för att hantera specialtecken
+    const encodedChatRoomId = encodeURIComponent(chatRoomId);
+    const result = await apiRequest<any>(`/Chat?where=chatRoomId=${encodedChatRoomId}&orderby=createdDate`);
     return Array.isArray(result) ? result : (result.value || []);
   },
 
-  getByUser: async (userId: string) => {
-    const result = await apiRequest<any>(`/Chat?where=senderId=${userId} OR receiverId=${userId}&orderby=-createdDate`);
-    return Array.isArray(result) ? result : (result.value || []);
+  getByUser: async (userId: string, username?: string) => {
+    // Backend stöder inte OR, så vi gör separata anrop och kombinerar resultaten
+    // Vi söker efter både email och username för att hitta både gamla och nya meddelanden
+    // (gamla meddelanden kan ha username som senderId/receiverId, nya har email)
+    
+    console.log('getByUser: Searching for messages', { userId, username });
+    
+    const queries: Promise<any>[] = [
+      // Sök med email/userId
+      apiRequest<any>(`/Chat?where=senderId=${encodeURIComponent(userId)}&orderby=-createdDate`),
+      apiRequest<any>(`/Chat?where=receiverId=${encodeURIComponent(userId)}&orderby=-createdDate`)
+    ];
+    
+    // Om username finns och är annorlunda än userId, sök också med username
+    if (username && username !== userId) {
+      queries.push(
+        apiRequest<any>(`/Chat?where=senderId=${encodeURIComponent(username)}&orderby=-createdDate`).catch(() => []),
+        apiRequest<any>(`/Chat?where=receiverId=${encodeURIComponent(username)}&orderby=-createdDate`).catch(() => [])
+      );
+    }
+    
+    const results = await Promise.all(queries);
+    
+    // Kombinera alla resultat
+    const allMessages: any[] = [];
+    results.forEach((result, index) => {
+      const messages = Array.isArray(result) ? result : (result.value || []);
+      console.log(`getByUser: Query ${index} returned ${messages.length} messages:`, messages);
+      allMessages.push(...messages);
+    });
+    
+    // Filtrera meddelanden - se till att de verkligen tillhör denna användare
+    // (extra säkerhet eftersom backend-filtreringen kan vara fel)
+    const currentUserIdentifiers = [userId, username].filter(Boolean);
+    const filteredMessages = allMessages.filter((msg: any) => {
+      const isSender = currentUserIdentifiers.includes(msg.senderId);
+      const isReceiver = currentUserIdentifiers.includes(msg.receiverId);
+      const belongsToUser = isSender || isReceiver;
+      
+      if (!belongsToUser) {
+        console.warn('getByUser: Filtered out message that does not belong to user:', {
+          msgId: msg.id,
+          senderId: msg.senderId,
+          receiverId: msg.receiverId,
+          currentUserIdentifiers
+        });
+      }
+      
+      return belongsToUser;
+    });
+    
+    // Ta bort dubbletter baserat på id
+    const uniqueMessages = Array.from(
+      new Map(filteredMessages.map((msg: any) => [msg.id || msg.ContentItemId, msg])).values()
+    );
+    
+    console.log('getByUser: Final filtered messages:', uniqueMessages.length, uniqueMessages);
+    
+    // Sortera efter createdDate (nyaste först)
+    return uniqueMessages.sort((a: any, b: any) => {
+      const dateA = new Date(a.createdDate || a.created_at || a.CreatedUtc || 0).getTime();
+      const dateB = new Date(b.createdDate || b.created_at || b.CreatedUtc || 0).getTime();
+      return dateB - dateA;
+    });
   },
 
   create: (chat: {

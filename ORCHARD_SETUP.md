@@ -80,6 +80,24 @@ Denna guide beskriver hur du konfigurerar Orchard Core CMS för Orchid Community
    - **IsPublished** (BooleanField) - Publiceringsstatus
 4. Spara
 
+### 2.5 Skapa "Chat" Content Type
+
+1. Skapa ny content type:
+   - **Display Name:** `Chat`
+   - **Technical Name:** `Chat`
+2. Lägg till **Parts**:
+   - **Title Part** (för meddelandets titel)
+   - **Common Part** ⚠️ **VIKTIGT:** Detta ger automatiskt `CreatedUtc` och `ModifiedUtc` fält som behövs för sortering
+3. Lägg till **Fields**:
+   - **Message** (TextField) - Meddelandets innehåll
+   - **SenderId** (TextField) - ID för avsändaren (email eller username)
+   - **ReceiverId** (TextField) - ID för mottagaren (email eller username)
+   - **ChatRoomId** (TextField) - ID för chat-rummet (kombination av sender och receiver)
+   - **IsRead** (BooleanField) - Om meddelandet är läst (default: false)
+4. Spara
+
+**VIKTIGT:** Common Part måste vara med för att `CreatedUtc` ska finnas automatiskt. Detta fält används för att sortera meddelanden efter datum.
+
 ## Steg 3: Skapa Användarroller
 
 ### 3.1 Skapa "Member" Roll
@@ -113,7 +131,7 @@ Denna guide beskriver hur du konfigurerar Orchard Core CMS för Orchid Community
 4. Fyll i:
    - **Title:** `Anonymous can view content`
    - **Roles:** `Anonymous`
-   - **Content Types:** `Post,Comment,Event,MarketplaceItem`
+   - **Content Types:** `Post,Comment,Event,MarketplaceItem,Chat`
    - **REST Methods:** ✅ GET
 5. Spara
 
@@ -122,7 +140,7 @@ Denna guide beskriver hur du konfigurerar Orchard Core CMS för Orchid Community
 1. Skapa nytt **RestPermissions**-objekt:
    - **Title:** `Members can create and edit`
    - **Roles:** `Member`
-   - **Content Types:** `Post,Comment,Event,MarketplaceItem`
+   - **Content Types:** `Post,Comment,Event,MarketplaceItem,Chat`
    - **REST Methods:** ✅ GET, ✅ POST, ✅ PUT
 2. Spara
 
@@ -131,7 +149,7 @@ Denna guide beskriver hur du konfigurerar Orchard Core CMS för Orchid Community
 1. Skapa nytt **RestPermissions**-objekt:
    - **Title:** `Moderators have full control`
    - **Roles:** `Moderator`
-   - **Content Types:** `Post,Comment,Event,MarketplaceItem`
+   - **Content Types:** `Post,Comment,Event,MarketplaceItem,Chat`
    - **REST Methods:** ✅ GET, ✅ POST, ✅ PUT, ✅ DELETE
 2. Spara
 
@@ -140,7 +158,7 @@ Denna guide beskriver hur du konfigurerar Orchard Core CMS för Orchid Community
 Administrators har automatiskt full åtkomst till alla endpoints, men du kan skapa explicit behörighet om du vill:
 - **Title:** `Administrators have full access`
 - **Roles:** `Administrator`
-- **Content Types:** `Post,Comment,Event,MarketplaceItem`
+- **Content Types:** `Post,Comment,Event,MarketplaceItem,Chat`
 - **REST Methods:** ✅ GET, ✅ POST, ✅ PUT, ✅ DELETE
 
 ## Steg 5: Publiceringsflöde

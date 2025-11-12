@@ -83,6 +83,11 @@ export const useNotifications = (user: User | null) => {
   const unreadCount = notifications?.filter((n) => !n.read).length || 0;
 
   const markAsRead = async (notificationId: number) => {
+    // Uppdatera state direkt för omedelbar feedback
+    setNotifications(prev => 
+      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+    );
+    
     try {
       const response = await fetch(`/api/notifications/${notificationId}`, {
         method: 'PUT',
@@ -91,9 +96,14 @@ export const useNotifications = (user: User | null) => {
         body: JSON.stringify({ read: true })
       });
       if (!response.ok) throw new Error('Failed to mark as read');
+      // Uppdatera från server för att säkerställa synkronisering
       fetchNotifications();
     } catch (err) {
       console.error('Error marking notification as read:', err);
+      // Om det misslyckas, återställ state
+      setNotifications(prev => 
+        prev.map(n => n.id === notificationId ? { ...n, read: false } : n)
+      );
     }
   };
 

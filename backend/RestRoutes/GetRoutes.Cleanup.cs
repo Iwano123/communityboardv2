@@ -1,5 +1,6 @@
 namespace RestRoutes;
 
+using System;
 using System.Text.Json;
 
 public static partial class GetRoutes
@@ -17,6 +18,64 @@ public static partial class GetRoutes
 
         if (obj.TryGetValue("DisplayText", out var title))
             clean["title"] = title.GetString()!;
+
+        // Try to get CreatedUtc from multiple sources (fallback chain)
+        string? createdUtcStr = null;
+        
+        // First, try Common Part (most reliable)
+        if (obj.TryGetValue("Common", out var commonPart) && commonPart.ValueKind == JsonValueKind.Object)
+        {
+            var commonDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(commonPart.GetRawText());
+            if (commonDict != null)
+            {
+                // Extract CreatedUtc if it exists (can be string or DateTime)
+                if (commonDict.TryGetValue("CreatedUtc", out var createdUtc))
+                {
+                    if (createdUtc.ValueKind == JsonValueKind.String)
+                    {
+                        createdUtcStr = createdUtc.GetString();
+                    }
+                    else if (createdUtc.ValueKind == JsonValueKind.Number)
+                    {
+                        // Handle Unix timestamp or ticks
+                        var ticks = createdUtc.GetInt64();
+                        if (ticks > 0)
+                        {
+                            var dateTime = DateTimeOffset.FromUnixTimeSeconds(ticks).DateTime;
+                            createdUtcStr = dateTime.ToString("O"); // ISO 8601 format
+                        }
+                    }
+                }
+                // Also check for ModifiedUtc
+                if (commonDict.TryGetValue("ModifiedUtc", out var modifiedUtc))
+                {
+                    if (modifiedUtc.ValueKind == JsonValueKind.String)
+                    {
+                        var modifiedUtcStr = modifiedUtc.GetString();
+                        if (!string.IsNullOrEmpty(modifiedUtcStr))
+                        {
+                            clean["modifiedUtc"] = modifiedUtcStr;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Fallback: Try to get CreatedUtc directly from root object (if Common Part didn't have it)
+        if (string.IsNullOrEmpty(createdUtcStr) && obj.TryGetValue("CreatedUtc", out var rootCreatedUtc))
+        {
+            if (rootCreatedUtc.ValueKind == JsonValueKind.String)
+            {
+                createdUtcStr = rootCreatedUtc.GetString();
+            }
+        }
+        
+        // Set createdDate and createdUtc if we found a value
+        if (!string.IsNullOrEmpty(createdUtcStr))
+        {
+            clean["createdDate"] = createdUtcStr;
+            clean["createdUtc"] = createdUtcStr;
+        }
 
         // Get the content type section (e.g., "Pet", "PetOwner")
         if (obj.TryGetValue(contentType, out var typeSection) && typeSection.ValueKind == JsonValueKind.Object)

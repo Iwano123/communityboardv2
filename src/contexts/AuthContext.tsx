@@ -24,19 +24,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAuthStatus = async () => {
     try {
       const result = await checkAuth();
+      console.log('Auth result:', result);
       if (result.isAuthenticated && result.user) {
+        const backendUser = result.user as any;
+        console.log('Backend user data:', backendUser);
+        
         // Map backend user to BulletinBoard User interface
         const mappedUser: User = {
           id: 0, // Backend doesn't return id, will need to get from elsewhere
-          firstName: result.user.username.split(' ')[0] || '',
-          lastName: result.user.username.split(' ').slice(1).join(' ') || '',
-          email: result.user.username, // Use username as email fallback
-          role: result.user.roles.includes('Administrator') ? 'admin' : 
-                result.user.roles.includes('Moderator') ? 'moderator' : 'user',
+          firstName: backendUser.firstName || (backendUser.username ? backendUser.username.split(' ')[0] : '') || '',
+          lastName: backendUser.lastName || (backendUser.username ? backendUser.username.split(' ').slice(1).join(' ') : '') || '',
+          email: backendUser.email || backendUser.username || '', // Use email if available, otherwise username
+          role: (Array.isArray(backendUser.roles) && backendUser.roles.includes('Administrator')) ? 'admin' : 
+                (Array.isArray(backendUser.roles) && backendUser.roles.includes('Moderator')) ? 'moderator' : 'user',
           created: new Date().toISOString(),
         };
+        console.log('Mapped user:', mappedUser);
         setUser(mappedUser);
       } else {
+        console.log('Not authenticated or no user data');
         setUser(null);
       }
     } catch (error) {

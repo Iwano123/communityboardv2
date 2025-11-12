@@ -1,10 +1,14 @@
 namespace RestRoutes;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
 using OrchardCore.ContentManagement.Metadata;
 using OrchardCore.Documents;
 using OrchardCore.Roles.Models;
+using OrchardCore.Users;
+using OrchardCore.Users.Models;
 using YesSql;
+using System.Text.Json;
 
 public static class SystemRoutes
 {
@@ -73,6 +77,49 @@ public static class SystemRoutes
             var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), "RestRoutes", "admin-script.js");
             var script = await File.ReadAllTextAsync(scriptPath);
             return Results.Content(script, "application/javascript");
+        });
+
+        // Get all users (Administrator always allowed, others need RestPermissions)
+        app.MapGet("api/users", async (
+            HttpContext context,
+            [FromServices] ISession session,
+            [FromServices] UserManager<IUser> userManager) =>
+        {
+            if (!IsAdministrator(context))
+            {
+                var permissionCheck = await PermissionsACL.CheckPermissions("system", "GET", context, session);
+                if (permissionCheck != null) return permissionCheck;
+            }
+
+            // Get all users from UserIndex
+            var users = await session
+                .Query<OrchardCore.Users.Models.User, OrchardCore.Users.Indexes.UserIndex>()
+                .ListAsync();
+
+            var usersList = new List<Dictionary<string, object>>();
+            var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
+            foreach (var user in users)
+            {
+                var u = user as User;
+                var userDict = new Dictionary<string, object>
+                {
+                    ["id"] = u?.UserId ?? "",
+                    ["username"] = user.UserName ?? "",
+                    ["email"] = u?.Email ?? "",
+                    ["firstName"] = u?.Properties?["FirstName"]?.ToString() ?? "",
+                    ["lastName"] = u?.Properties?["LastName"]?.ToString() ?? "",
+                    ["phoneNumber"] = u?.PhoneNumber ?? ""
+                };
+
+                // Get user roles
+                var roles = await userManager.GetRolesAsync(user);
+                userDict["roles"] = roles;
+
+                usersList.Add(userDict);
+            }
+
+            return Results.Json(usersList);
         });
     }
 }
