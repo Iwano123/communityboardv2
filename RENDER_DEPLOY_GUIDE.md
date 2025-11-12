@@ -35,9 +35,9 @@ Denna guide visar exakt vad du ska göra i Render Dashboard för att deploya bå
 
 6. **Branch:** `abdi` (kontrollera att detta stämmer)
 
-7. **Dockerfile Path:** `backend/Dockerfile`
+7. **Root Directory:** `backend` (VIKTIGT! Detta gör att Docker Context är backend-mappen)
 
-8. **Docker Context:** `backend` (eller lämna tomt)
+8. **Dockerfile Path:** `Dockerfile` (eller lämna tomt - Render hittar den automatiskt i backend-mappen)
 
 9. **Plan:** Välj **`Free`**
 
