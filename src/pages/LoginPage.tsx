@@ -34,15 +34,16 @@ export default function LoginPage() {
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        // Backend returns user data directly when successful (has username or email)
+        if (data && (data.username || data.email || data.id)) {
           // Map backend user to BulletinBoard User interface
           const mappedUser: User = {
             id: 0,
-            firstName: data.username.split(' ')[0] || '',
-            lastName: data.username.split(' ').slice(1).join(' ') || '',
-            email: data.username,
-            role: data.roles.includes('Administrator') ? 'admin' : 
-                  data.roles.includes('Moderator') ? 'moderator' : 'user',
+            firstName: data.firstName || (data.username ? data.username.split(' ')[0] : '') || '',
+            lastName: data.lastName || (data.username ? data.username.split(' ').slice(1).join(' ') : '') || '',
+            email: data.email || data.username || '',
+            role: (Array.isArray(data.roles) && data.roles.includes('Administrator')) ? 'admin' : 
+                  (Array.isArray(data.roles) && data.roles.includes('Moderator')) ? 'moderator' : 'user',
             created: new Date().toISOString(),
           };
           login(mappedUser);
