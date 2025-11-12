@@ -1,0 +1,775 @@
+// ============================================
+// Mobile-First Responsive Styles
+// Optimized for iPhone 15/16 Pro Max and similar devices
+// ============================================
+
+// Mobile breakpoints
+$mobile-sm: 375px;  // iPhone SE, 12/13 mini
+$mobile-md: 390px;  // iPhone 12/13/14
+$mobile-lg: 430px;  // iPhone 14/15 Pro Max, 16 Pro Max
+$tablet: 768px;
+$desktop: 1024px;
+
+// Mobile-specific variables
+$mobile-padding: 1rem;
+$mobile-touch-target: 44px;
+$mobile-header-height: 60px;
+$mobile-bottom-nav-height: 70px;
+
+// ============================================
+// Base Mobile Styles
+// ============================================
+
+@media (max-width: $tablet) {
+  // Mobile-only: Ensure smooth scrolling and fixed layout
+  html {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-size: 16px; // Prevent iOS zoom on input focus
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    padding-bottom: $mobile-bottom-nav-height !important; // Space for bottom nav (mobile only)
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
+
+  // Main content should scroll on mobile, not the body
+  #root {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  // Container adjustments
+  .container,
+  .container-fluid {
+    padding-left: $mobile-padding;
+    padding-right: $mobile-padding;
+  }
+
+  .page-container {
+    padding: 1rem;
+    min-height: calc(100vh - #{$mobile-header-height} - #{$mobile-bottom-nav-height});
+  }
+
+  // Typography
+  h1 {
+    font-size: 1.75rem !important;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 1.5rem !important;
+    line-height: 1.3;
+  }
+
+  h3 {
+    font-size: 1.25rem !important;
+  }
+
+  h4 {
+    font-size: 1.125rem !important;
+  }
+
+  p {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  // Touch-friendly buttons
+  .btn,
+  button,
+  [role="button"] {
+    min-height: $mobile-touch-target;
+    min-width: $mobile-touch-target;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    touch-action: manipulation;
+  }
+
+  .btn-sm {
+    min-height: 40px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .btn-lg {
+    min-height: 52px;
+    padding: 1rem 1.5rem;
+    font-size: 1.125rem;
+  }
+
+  // Form controls - CRITICAL: font-size MUST be 16px or larger to prevent iOS zoom
+  .form-control,
+  .form-select,
+  input,
+  textarea,
+  select,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="number"],
+  input[type="tel"] {
+    min-height: $mobile-touch-target;
+    font-size: 16px !important; // Prevent iOS zoom
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+  }
+
+  textarea {
+    min-height: 120px;
+  }
+
+  .form-label {
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+
+  // Cards
+  .card {
+    margin-bottom: 1rem;
+    border-radius: 0.75rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .card-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .card-footer {
+    padding: 0.75rem 1rem;
+  }
+
+  // Modals
+  .modal-dialog {
+    margin: 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+
+  .modal-content {
+    border-radius: 1rem;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 1rem;
+  }
+
+  // Dropdowns
+  .dropdown-menu {
+    max-width: 90vw;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .dropdown-item {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+
+  // Alerts
+  .alert {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.5rem;
+  }
+
+  // Badges
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.6em;
+  }
+
+  // Links
+  a {
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  // Images
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  // Tables - make them scrollable
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    font-size: 0.875rem;
+  }
+
+  // Spacing utilities for mobile
+  .mb-mobile {
+    margin-bottom: 1rem !important;
+  }
+
+  .mt-mobile {
+    margin-top: 1rem !important;
+  }
+
+  .p-mobile {
+    padding: 1rem !important;
+  }
+
+  // Hide on mobile
+  .hide-mobile {
+    display: none !important;
+  }
+
+  // Show only on mobile
+  .show-mobile {
+    display: block !important;
+  }
+}
+
+// ============================================
+// Mobile Bottom Navigation
+// ============================================
+
+// ============================================
+// Desktop Styles (default)
+// ============================================
+
+// Hide mobile nav on desktop (default)
+.mobile-bottom-nav {
+  display: none;
+}
+
+// No extra padding on desktop
+body {
+  padding-bottom: 0;
+}
+
+// Desktop navigation should be visible
+.header .nav,
+.header-container .nav {
+  display: flex;
+}
+
+// Show only on mobile devices
+@media (max-width: $tablet) {
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: $mobile-bottom-nav-height;
+    background-color: hsl(var(--card));
+    border-top: 1px solid hsl(var(--border));
+    justify-content: space-around;
+    align-items: center;
+    padding: 0.5rem 0;
+    z-index: 1000;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    
+    @supports (backdrop-filter: blur(10px)) {
+      background-color: hsl(var(--card) / 0.9);
+    }
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    text-decoration: none;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    min-width: 60px;
+    transition: var(--transition-smooth);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+
+    &:hover,
+    &:active {
+      background-color: hsl(var(--accent));
+      color: hsl(var(--accent-foreground));
+    }
+
+    .mobile-nav-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+      
+      i {
+        font-size: 1.25rem;
+      }
+    }
+
+    .mobile-nav-label {
+      font-size: 0.7rem;
+      line-height: 1;
+    }
+
+    &.mobile-nav-active {
+      color: hsl(var(--primary));
+      
+      .mobile-nav-icon {
+        transform: scale(1.1);
+      }
+    }
+  }
+
+  // Hide desktop navigation on mobile
+  .header .nav,
+  .header-container .nav {
+    display: none !important;
+  }
+  
+  .header-nav-section {
+    display: none !important;
+  }
+
+  // Adjust header for mobile
+  .header,
+  .header-base {
+    height: $mobile-header-height;
+  }
+
+  .header-container {
+    padding: 0.75rem 1rem;
+    height: $mobile-header-height;
+    gap: 1rem;
+  }
+
+  // Simplify logo on mobile
+  .logo,
+  .header-logo {
+    .logo-tagline,
+    .header-logo-subtitle {
+      display: none;
+    }
+
+    .logo-text,
+    .header-logo-text {
+      .logo-name,
+      .header-logo-title {
+        font-size: 1.125rem;
+      }
+    }
+
+    .logo-icon,
+    .header-logo-icon {
+      width: 36px;
+      height: 36px;
+      font-size: 1.25rem;
+    }
+  }
+
+  // Header actions - show only important ones
+  .header-actions,
+  .header-icons-section {
+    gap: 0.25rem;
+
+    .icon-button {
+      width: $mobile-touch-target;
+      height: $mobile-touch-target;
+      padding: 0;
+      font-size: 1.125rem;
+    }
+
+    // Hide less important buttons on very small screens
+    @media (max-width: $mobile-md) {
+      .icon-button:nth-child(n+3) {
+        display: none;
+      }
+    }
+  }
+
+  .logout-button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+// ============================================
+// Page-Specific Mobile Styles
+// ============================================
+
+@media (max-width: $tablet) {
+  // For You Page
+  .for-you-page {
+    .for-you-card-header {
+      padding: 1rem;
+      
+      h1 {
+        font-size: 1.5rem !important;
+      }
+    }
+
+    .post-card,
+    .event-card,
+    .marketplace-card {
+      margin-bottom: 0.75rem;
+      
+      .card-body {
+        padding: 1rem;
+      }
+
+      .post-header,
+      .card-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .post-title,
+      .card-title {
+        font-size: 1.125rem;
+      }
+
+      .post-content,
+      .card-text {
+        font-size: 0.9375rem;
+        line-height: 1.6;
+      }
+
+      img {
+        border-radius: 0.5rem;
+        margin-top: 0.75rem;
+      }
+    }
+
+    .post-actions,
+    .card-footer {
+      gap: 0.75rem;
+      
+      .btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+      }
+    }
+  }
+
+  // Messages Page
+  .messages-page {
+    .messages-container {
+      flex-direction: column;
+      height: calc(100vh - #{$mobile-header-height} - #{$mobile-bottom-nav-height});
+    }
+
+    .messages-sidebar {
+      width: 100%;
+      max-height: 40vh;
+      border-right: none;
+      border-bottom: 1px solid hsl(var(--border));
+    }
+
+    .messages-main {
+      width: 100%;
+      height: 60vh;
+    }
+
+    .message-bubble {
+      max-width: 80%;
+      padding: 0.75rem;
+      font-size: 0.9375rem;
+    }
+
+    .message-input-container {
+      padding: 0.75rem;
+      
+      input {
+        font-size: 1rem;
+      }
+
+      button {
+        min-width: $mobile-touch-target;
+      }
+    }
+  }
+
+  // Create Post Page
+  .create-post-page {
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .image-upload-area {
+      min-height: 150px;
+      padding: 2rem 1rem;
+    }
+
+    .post-preview {
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+  }
+
+  // Post Details Page
+  .post-details-page {
+    .post-header-section {
+      padding: 1rem;
+    }
+
+    .post-image-section {
+      img {
+        max-height: 300px;
+        object-fit: cover;
+      }
+    }
+
+    .post-content-section {
+      padding: 1rem;
+    }
+
+    .comments-section {
+      padding: 1rem;
+
+      .comment-item {
+        padding: 0.75rem 0;
+        margin-bottom: 0.75rem;
+      }
+    }
+  }
+
+  // Login/Register Pages
+  .login-page,
+  .register-page {
+    padding: 1rem;
+    min-height: calc(100vh - #{$mobile-header-height});
+
+    .card {
+      box-shadow: none;
+      border: 1px solid hsl(var(--border));
+    }
+
+    .card-header {
+      padding: 1.5rem 1rem 1rem;
+
+      h1,
+      h2 {
+        font-size: 1.75rem !important;
+      }
+
+      p {
+        font-size: 0.875rem;
+      }
+    }
+
+    .card-body {
+      padding: 1rem;
+    }
+  }
+
+  // Events Page
+  .events-page {
+    .event-card {
+      .event-image {
+        height: 180px;
+      }
+
+      .event-date-badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.6rem;
+      }
+    }
+
+    .calendar-view {
+      font-size: 0.875rem;
+
+      .calendar-day {
+        min-height: 60px;
+      }
+    }
+  }
+
+  // Profile Page
+  .profile-page {
+    .profile-header {
+      flex-direction: column;
+      text-align: center;
+      padding: 1.5rem 1rem;
+    }
+
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+    }
+
+    .profile-stats {
+      flex-direction: row;
+      justify-content: space-around;
+      padding: 1rem;
+      gap: 1rem;
+
+      .stat-item {
+        flex: 1;
+        text-align: center;
+      }
+    }
+
+    .profile-tabs {
+      .nav-tabs {
+        .nav-link {
+          font-size: 0.875rem;
+          padding: 0.75rem 1rem;
+        }
+      }
+    }
+  }
+}
+
+// ============================================
+// Very Small Devices (< 375px)
+// ============================================
+
+@media (max-width: 374px) {
+  body {
+    font-size: 15px;
+  }
+
+  .container,
+  .container-fluid {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .btn,
+  button {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9375rem;
+  }
+
+  h1 {
+    font-size: 1.5rem !important;
+  }
+
+  h2 {
+    font-size: 1.25rem !important;
+  }
+
+  .mobile-nav-item {
+    min-width: 50px;
+    padding: 0.5rem;
+
+    .mobile-nav-label {
+      font-size: 0.65rem;
+    }
+
+    .mobile-nav-icon {
+      font-size: 1.25rem;
+    }
+  }
+}
+
+// ============================================
+// Landscape Orientation Adjustments
+// ============================================
+
+@media (max-width: $tablet) and (orientation: landscape) {
+  body {
+    padding-bottom: 60px; // Smaller bottom nav for landscape
+  }
+
+  .mobile-bottom-nav {
+    height: 60px;
+    padding: 0.25rem 0;
+  }
+
+  .mobile-nav-item {
+    .mobile-nav-icon {
+      font-size: 1.25rem;
+    }
+
+    .mobile-nav-label {
+      font-size: 0.65rem;
+    }
+  }
+
+  .page-container {
+    min-height: calc(100vh - #{$mobile-header-height} - 60px);
+  }
+
+  // Modals take full screen in landscape
+  .modal-dialog {
+    margin: 0;
+    max-width: 100%;
+    max-height: 100vh;
+  }
+
+  .modal-content {
+    height: 100vh;
+    border-radius: 0;
+  }
+}
+
+// ============================================
+// Touch Interaction Improvements
+// ============================================
+
+@media (hover: none) and (pointer: coarse) {
+  // Enhanced touch feedback
+  .btn,
+  button,
+  a,
+  [role="button"] {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+
+    &:active {
+      transform: scale(0.98);
+      opacity: 0.8;
+    }
+  }
+
+  // Prevent double-tap zoom
+  a,
+  button,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  // Better scroll behavior
+  .overflow-auto,
+  .overflow-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+
+// ============================================
+// Safe Area Insets (for notch/dynamic island)
+// ============================================
+
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: calc(#{$mobile-bottom-nav-height} + env(safe-area-inset-bottom));
+  }
+
+  .header,
+  .header-base {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .mobile-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+    height: calc(#{$mobile-bottom-nav-height} + env(safe-area-inset-bottom));
+  }
+}
+

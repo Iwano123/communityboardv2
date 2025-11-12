@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { useStateObject } from './utils/useStateObject';
 import { useEffect, useState } from 'react';
 import Header from './partials/Header';
+import MobileNav from './components/MobileNav';
 import { PushNotificationPrompt } from './components/PushNotificationPrompt';
 import { registerServiceWorker } from './utils/pushNotifications';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -49,6 +50,7 @@ function AppContent() {
       <main className="flex-grow-1">
         <Outlet context={[state, setState, user]} />
       </main>
+      <MobileNav />
       <PushNotificationPrompt user={user} />
     </div>
   );

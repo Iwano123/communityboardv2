@@ -916,7 +916,7 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="messages-page">
+    <div className={`messages-page ${selectedChatRoom ? 'chat-selected' : ''}`}>
       <div className="messages-sidebar">
         <div className="sidebar-header">
           <h2>Messages</h2>
@@ -1029,6 +1029,13 @@ export default function MessagesPage() {
         {selectedChatRoom ? (
           <>
             <div className="chat-header">
+              <button 
+                className="back-button"
+                onClick={() => setSelectedChatRoom(null)}
+                title="Back to conversations"
+              >
+                ←
+              </button>
               <h3>
                 {chatRooms.find((r) => r.id === selectedChatRoom)?.otherUserName || 
                  chatRooms.find((r) => r.id === selectedChatRoom)?.otherUserId}

@@ -11,6 +11,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   color: #1f2937;
   background: #ffffff;
+  padding-bottom: 0; /* No padding on desktop */
 }
 
 .loading {

@@ -98,3 +98,130 @@
   color: #94a3b8 !important;
 }
 
+// ============================================
+// Mobile Responsive Styles
+// ============================================
+
+@media (max-width: 768px) {
+  .for-you-page {
+    padding: 0;
+    
+    .container {
+      padding: 0;
+      max-width: 100%;
+    }
+  }
+
+  .for-you-card-header {
+    padding: 1rem;
+    border-radius: 0;
+    
+    h1 {
+      font-size: 1.5rem !important;
+    }
+  }
+
+  .for-you-icon {
+    font-size: 1.5rem;
+  }
+
+  // Post cards
+  .for-you-page .card {
+    margin-bottom: 0.5rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+
+    &:first-of-type {
+      border-top: none;
+    }
+  }
+
+  .for-you-page .card-body {
+    padding: 1rem;
+  }
+
+  .for-you-page .card-title {
+    font-size: 1.125rem;
+  }
+
+  .for-you-page .card-text {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+
+  // Images in posts
+  .for-you-page img {
+    border-radius: 0.5rem;
+    max-height: 300px;
+    object-fit: cover;
+  }
+
+  // Action buttons
+  .for-you-page .btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    min-height: 44px;
+  }
+
+  .for-you-page .btn-sm {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.8125rem;
+    min-height: 36px;
+  }
+
+  // Avatar sizes
+  .for-you-page .avatar-twitter {
+    width: 36px;
+    height: 36px;
+    font-size: 0.875rem;
+  }
+
+  // Badge sizes
+  .for-you-page .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  // Dropdown menus
+  .for-you-page .dropdown-menu {
+    max-width: 90vw;
+    font-size: 0.9375rem;
+  }
+
+  .for-you-page .dropdown-item {
+    padding: 0.75rem 1rem;
+  }
+}
+
+// Very small devices (< 390px)
+@media (max-width: 390px) {
+  .for-you-card-header {
+    padding: 0.75rem;
+    
+    h1 {
+      font-size: 1.25rem !important;
+    }
+  }
+
+  .for-you-icon {
+    font-size: 1.25rem;
+  }
+
+  .for-you-title {
+    font-size: 2rem;
+  }
+
+  .for-you-page .card-body {
+    padding: 0.875rem;
+  }
+
+  .for-you-page .card-title {
+    font-size: 1rem;
+  }
+
+  .for-you-page .card-text {
+    font-size: 0.875rem;
+  }
+}
+

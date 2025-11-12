@@ -18,6 +18,9 @@
 // Import Page Styles
 @import 'pages/for-you';
 
+// Import Mobile Styles (must be last for proper override)
+@import 'mobile';
+
 // ============================================
 // Design System - CSS Custom Properties
 // All colors, gradients, fonts, etc defined here
