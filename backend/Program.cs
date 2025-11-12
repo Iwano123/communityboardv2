@@ -26,4 +26,13 @@ app.UseStaticFiles();
 
 app.UseOrchardCore();
 
-app.Run();
+// Render.com använder PORT environment variable
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    app.Run($"http://0.0.0.0:{port}");
+}
+else
+{
+    app.Run();
+}

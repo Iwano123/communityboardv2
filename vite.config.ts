@@ -7,15 +7,19 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5001',
+        target: process.env.VITE_API_URL || 'http://localhost:5001',
         changeOrigin: true,
         secure: false
       },
       '/media': {
-        target: 'http://localhost:5001',
+        target: process.env.VITE_API_URL || 'http://localhost:5001',
         changeOrigin: true,
         secure: false
       }
     }
+  },
+  // För produktion - använd environment variable för API URL
+  define: {
+    'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL || '')
   }
 });
