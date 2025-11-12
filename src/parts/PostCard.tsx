@@ -36,9 +36,9 @@ export default function PostCard({
   location,
   price,
   image_url,
-  is_featured,
-  views,
-  comments_count,
+  is_featured: _is_featured,
+  views: _views,
+  comments_count: _comments_count,
   onEdit,
   onDelete
 }: PostCardProps) {
@@ -121,17 +121,7 @@ export default function PostCard({
     }
   };
 
-  const handleContactClick = () => {
-    if (user) {
-      setContactForm({
-        subject: title ? `Re: ${title}` : 'Re: Post',
-        message: '',
-        senderEmail: user.email || '',
-        senderName: `${user.firstName} ${user.lastName}`.trim()
-      });
-    }
-    setShowContactModal(true);
-  };
+  // handleContactClick removed - not used
 
   // Generate user handle from email
   const userHandle = author_email?.split('@')[0] || `user${author_id}`;

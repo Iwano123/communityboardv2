@@ -14,7 +14,8 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   for (let i = 0; i < rawData.length; ++i) {
     outputArray[i] = rawData.charCodeAt(i);
   }
-  return outputArray;
+  // Return as BufferSource-compatible type
+  return outputArray as Uint8Array;
 }
 
 export async function registerServiceWorker() {
@@ -51,7 +52,7 @@ export async function requestNotificationPermission() {
   return Notification.permission;
 }
 
-export async function subscribeToPushNotifications(userId: number) {
+export async function subscribeToPushNotifications(_userId: number) {
   try {
     const registration = await navigator.serviceWorker.ready;
     
@@ -62,9 +63,10 @@ export async function subscribeToPushNotifications(userId: number) {
         throw new Error('VAPID public key is not configured');
       }
       
+      const key = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        applicationServerKey: key as BufferSource
       });
     }
 

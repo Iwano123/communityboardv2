@@ -1,4 +1,3 @@
-import { mapBackendPostToFrontend } from './dataMapper';
 import type { Post } from '../interfaces/BulletinBoard';
 
 export default async function postsLoader() {
