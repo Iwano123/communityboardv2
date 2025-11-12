@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card, Container, Row, Col, Form, Button, Alert, Badge, Tab, Tabs } from 'react-bootstrap';
 import { useOutletContext } from 'react-router-dom';
 import type { User, Post } from '../interfaces/BulletinBoard';
+import { postApi } from '../utils/api';
+import { mapBackendPostToFrontend } from '../utils/dataMapper';
 
 ProfilePage.route = {
   path: '/profile',
@@ -39,16 +41,18 @@ export default function ProfilePage() {
       if (!user) return;
       
       try {
-        const response = await fetch('/api/posts', {
-          credentials: 'include'
-        });
-        if (response.ok) {
-          const allPosts = await response.json();
-          const posts = allPosts.filter((post: Post) => post.author_id === user.id);
-          setUserPosts(posts);
-        }
+        // Get all posts and filter by author email or name
+        const allPosts = await postApi.getAll({ orderby: '-createdDate' });
+        const mappedPosts = allPosts.map(mapBackendPostToFrontend);
+        const posts = mappedPosts.filter((post: Post) => 
+          post.author_email === user.email || 
+          post.author_name === `${user.firstName} ${user.lastName}`.trim() ||
+          post.author_id === String(user.id)
+        );
+        setUserPosts(posts);
       } catch (err) {
         console.error('Error loading user posts:', err);
+        setUserPosts([]);
       }
     };
 
@@ -75,23 +79,18 @@ export default function ProfilePage() {
     }
 
     try {
-      const response = await fetch(`/api/users/${user.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        const updatedUser = await response.json();
-        setUser(updatedUser);
-        setSuccess('Profile updated successfully!');
-        setIsEditing(false);
-      } else {
-        setError('Failed to update profile');
-      }
+      // Note: User profile update endpoint doesn't exist in the backend
+      // For now, we'll just update the local state
+      // In a real implementation, you would need to add a user update endpoint
+      const updatedUser: User = {
+        ...user,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email
+      };
+      setUser(updatedUser);
+      setSuccess('Profile updated successfully! (Note: Changes are local only - user update endpoint not implemented)');
+      setIsEditing(false);
     } catch (err) {
       setError('Error updating profile');
     } finally {

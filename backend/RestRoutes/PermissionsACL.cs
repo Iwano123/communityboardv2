@@ -18,9 +18,15 @@ public static class PermissionsACL
 
         if (permissions == null) permissions = new List<Dictionary<string, object>>();
 
+        // Debug: Log what we found
+        Console.WriteLine($"[PermissionsACL] Found {permissions.Count} RestPermissions entries");
+
         foreach (var permission in permissions)
         {
             if (permission == null) continue;
+
+            // Debug: Log all keys in permission
+            Console.WriteLine($"[PermissionsACL] Permission keys: {string.Join(", ", permission.Keys)}");
 
             // Helper function to convert comma-separated strings or text field dictionaries to list
             // Handles both: new TextField format (plain string) and old MultiTextField format (dictionary)
@@ -57,9 +63,19 @@ public static class PermissionsACL
                     .ToList();
             }
 
+            // Debug: Log raw values BEFORE conversion
+            var rawRestMethods = permission.GetValueOrDefault("restMethods");
+            Console.WriteLine($"[PermissionsACL] RAW restMethods value: {rawRestMethods?.GetType().Name ?? "null"}");
+            Console.WriteLine($"[PermissionsACL] RAW restMethods content: {System.Text.Json.JsonSerializer.Serialize(rawRestMethods)}");
+
             var roles = ConvertCommaSeparatedToList(permission.GetValueOrDefault("roles"));
             var contentTypes = ConvertCommaSeparatedToList(permission.GetValueOrDefault("contentTypes"));
-            var restMethods = ConvertArrayToList(permission.GetValueOrDefault("restMethods"));
+            var restMethods = ConvertCommaSeparatedToList(rawRestMethods);
+
+            // Debug: Log parsed values
+            Console.WriteLine($"[PermissionsACL] Roles: [{string.Join(", ", roles)}]");
+            Console.WriteLine($"[PermissionsACL] ContentTypes: [{string.Join(", ", contentTypes)}]");
+            Console.WriteLine($"[PermissionsACL] RestMethods: [{string.Join(", ", restMethods)}]");
 
             foreach (var role in roles)
             {
@@ -96,16 +112,36 @@ public static class PermissionsACL
 
         var requestMethod = httpMethod.ToUpper();
 
+        // Debug: Log user roles and what we're checking
+        Console.WriteLine($"[PermissionsACL] User roles: [{string.Join(", ", userRoles)}]");
+        Console.WriteLine($"[PermissionsACL] Checking: {requestMethod} {contentType}");
+        Console.WriteLine($"[PermissionsACL] Available roles in permissions: [{string.Join(", ", permissionsByRole.Keys)}]");
+
         // Check if any of the user's roles has permission
         var hasPermission = false;
         foreach (var role in userRoles)
         {
-            if (permissionsByRole.ContainsKey(role) &&
-                permissionsByRole[role].ContainsKey(contentType) &&
-                permissionsByRole[role][contentType].ContainsKey(requestMethod))
+            if (permissionsByRole.ContainsKey(role))
             {
-                hasPermission = true;
-                break;
+                Console.WriteLine($"[PermissionsACL] Role '{role}' found in permissions");
+                if (permissionsByRole[role].ContainsKey(contentType))
+                {
+                    Console.WriteLine($"[PermissionsACL] ContentType '{contentType}' found for role '{role}'");
+                    if (permissionsByRole[role][contentType].ContainsKey(requestMethod))
+                    {
+                        Console.WriteLine($"[PermissionsACL] Method '{requestMethod}' found - PERMISSION GRANTED");
+                        hasPermission = true;
+                        break;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[PermissionsACL] Method '{requestMethod}' NOT found. Available methods: [{string.Join(", ", permissionsByRole[role][contentType].Keys)}]");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"[PermissionsACL] ContentType '{contentType}' NOT found for role '{role}'. Available types: [{string.Join(", ", permissionsByRole[role].Keys)}]");
+                }
             }
         }
 

@@ -66,6 +66,12 @@ public static class PostRoutes
                 contentItem.Owner = context.User?.Identity?.Name ?? "anonymous";
                 contentItem.Author = contentItem.Owner;
 
+                // Initialize the content type section if it doesn't exist
+                if (contentItem.Content[contentType] == null)
+                {
+                    contentItem.Content[contentType] = new System.Dynamic.ExpandoObject();
+                }
+
                 // Build content directly into the content item
                 foreach (var kvp in body)
                 {
@@ -160,6 +166,8 @@ public static class PostRoutes
                                 var idValue = jsonEl.GetString();
                                 if (idValue != null)
                                 {
+                                    if (contentItem.Content[contentType][fieldName] == null)
+                                        contentItem.Content[contentType][fieldName] = new Dictionary<string, object>();
                                     contentItem.Content[contentType][fieldName]["ContentItemIds"] = new List<string> { idValue };
                                 }
                             }
@@ -176,12 +184,16 @@ public static class PostRoutes
                                 }
                                 if (idList.Count > 0)
                                 {
+                                    if (contentItem.Content[contentType][fieldName] == null)
+                                        contentItem.Content[contentType][fieldName] = new Dictionary<string, object>();
                                     contentItem.Content[contentType][fieldName]["ContentItemIds"] = idList;
                                 }
                             }
                         }
                         else if (value is string strValue)
                         {
+                            if (contentItem.Content[contentType][fieldName] == null)
+                                contentItem.Content[contentType][fieldName] = new Dictionary<string, object>();
                             contentItem.Content[contentType][fieldName]["ContentItemIds"] = new List<string> { strValue };
                         }
                     }
@@ -190,14 +202,20 @@ public static class PostRoutes
                         // Extract the actual string value, not a wrapped JObject
                         if (jsonElement.ValueKind == JsonValueKind.String)
                         {
+                            if (contentItem.Content[contentType][pascalKey] == null)
+                                contentItem.Content[contentType][pascalKey] = new Dictionary<string, object>();
                             contentItem.Content[contentType][pascalKey]["Text"] = jsonElement.GetString();
                         }
                         else if (jsonElement.ValueKind == JsonValueKind.Number)
                         {
+                            if (contentItem.Content[contentType][pascalKey] == null)
+                                contentItem.Content[contentType][pascalKey] = new Dictionary<string, object>();
                             contentItem.Content[contentType][pascalKey]["Value"] = jsonElement.GetDouble();
                         }
                         else if (jsonElement.ValueKind == JsonValueKind.True || jsonElement.ValueKind == JsonValueKind.False)
                         {
+                            if (contentItem.Content[contentType][pascalKey] == null)
+                                contentItem.Content[contentType][pascalKey] = new Dictionary<string, object>();
                             contentItem.Content[contentType][pascalKey]["Value"] = jsonElement.GetBoolean();
                         }
                         else if (jsonElement.ValueKind == JsonValueKind.Object)
@@ -228,6 +246,8 @@ public static class PostRoutes
                                 }
 
                                 // Assign arrays directly - ContentItem.Content uses System.Text.Json, so use List instead of JArray
+                                if (contentItem.Content[contentType][pascalKey] == null)
+                                    contentItem.Content[contentType][pascalKey] = new Dictionary<string, object>();
                                 contentItem.Content[contentType][pascalKey]["Paths"] = paths;
                                 contentItem.Content[contentType][pascalKey]["MediaTexts"] = mediaTexts;
                             }
@@ -272,6 +292,8 @@ public static class PostRoutes
                                     }
                                 }
 
+                                if (contentItem.Content[contentType][pascalKey] == null)
+                                    contentItem.Content[contentType][pascalKey] = new Dictionary<string, object>();
                                 contentItem.Content[contentType][pascalKey]["UserIds"] = userIds;
                                 contentItem.Content[contentType][pascalKey]["UserNames"] = userNames;
                             }
@@ -292,6 +314,9 @@ public static class PostRoutes
                                 var isContentItemIds = arrayData.Count > 0 &&
                                     arrayData.All(id => id.Length > 20 && id.All(c => char.IsLetterOrDigit(c)));
 
+                                if (contentItem.Content[contentType][pascalKey] == null)
+                                    contentItem.Content[contentType][pascalKey] = new Dictionary<string, object>();
+
                                 if (isContentItemIds)
                                 {
                                     contentItem.Content[contentType][pascalKey]["ContentItemIds"] = arrayData;
@@ -309,6 +334,8 @@ public static class PostRoutes
                     }
                     else if (value is string strValue)
                     {
+                        if (contentItem.Content[contentType][pascalKey] == null)
+                            contentItem.Content[contentType][pascalKey] = new Dictionary<string, object>();
                         contentItem.Content[contentType][pascalKey]["Text"] = strValue;
                     }
                     else if (value is int or long or double or float or decimal)

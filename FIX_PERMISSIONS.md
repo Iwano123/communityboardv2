@@ -40,7 +40,7 @@ Detta visar:
 4. Fyll i följande (inga backticks, skriv direkt):
    - **Title:** Administrators have full access
    - **Roles:** Administrator (skriv exakt så, med stort A)
-   - **Content Types:** Post,Comment,Event,MarketplaceItem (kommaseparerat, inga mellanslag efter kommatecken)
+   - **Content Types:** Post,Comment,Event,MarketplaceItem,Chat (kommaseparerat, inga mellanslag efter kommatecken)
    - **REST Methods:** 
      - ✅ **GET** (läsa)
      - ✅ **POST** (skapa)
@@ -77,7 +77,7 @@ npm run seed-data
 ## Vanliga problem:
 
 1. **Fel rollnamn:** Måste vara exakt `Administrator` (med stort A)
-2. **Fel content types:** Måste vara exakt `Post,Comment,Event,MarketplaceItem` (inga mellanslag efter kommatecken)
+2. **Fel content types:** Måste vara exakt `Post,Comment,Event,MarketplaceItem,Chat` (inga mellanslag efter kommatecken)
 3. **Glömt spara:** Efter att du har fyllt i formuläret måste du klicka **Save** längst ner
 4. **Cache:** Vänta några sekunder efter att du har sparat innan du testar igen
 

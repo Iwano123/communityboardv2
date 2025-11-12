@@ -37,7 +37,7 @@ async function apiRequest<T>(
 
 // Post API
 export const postApi = {
-  getAll: (params?: { where?: string; orderby?: string; limit?: number; offset?: number }) => {
+  getAll: async (params?: { where?: string; orderby?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams();
     if (params?.where) query.append('where', params.where);
     if (params?.orderby) query.append('orderby', params.orderby);
@@ -45,7 +45,9 @@ export const postApi = {
     if (params?.offset) query.append('offset', params.offset.toString());
     
     const queryString = query.toString();
-    return apiRequest<any[]>(`/Post${queryString ? `?${queryString}` : ''}`);
+    const result = await apiRequest<any>(`/Post${queryString ? `?${queryString}` : ''}`);
+    // Backend returns { value: [...], Count: N } format, extract the array
+    return Array.isArray(result) ? result : (result.value || []);
   },
 
   getById: (id: string) => apiRequest<any>(`/Post/${id}`),
@@ -78,17 +80,20 @@ export const postApi = {
 
 // Comment API
 export const commentApi = {
-  getAll: (params?: { where?: string; orderby?: string }) => {
+  getAll: async (params?: { where?: string; orderby?: string }) => {
     const query = new URLSearchParams();
     if (params?.where) query.append('where', params.where);
     if (params?.orderby) query.append('orderby', params.orderby);
     
     const queryString = query.toString();
-    return apiRequest<any[]>(`/Comment${queryString ? `?${queryString}` : ''}`);
+    const result = await apiRequest<any>(`/Comment${queryString ? `?${queryString}` : ''}`);
+    return Array.isArray(result) ? result : (result.value || []);
   },
 
-  getByPostId: (postId: string) =>
-    apiRequest<any[]>(`/Comment?where=postId=${postId}&orderby=-createdDate`),
+  getByPostId: async (postId: string) => {
+    const result = await apiRequest<any>(`/Comment?where=postId=${postId}&orderby=-createdDate`);
+    return Array.isArray(result) ? result : (result.value || []);
+  },
 
   create: (comment: {
     title: string;
@@ -106,14 +111,15 @@ export const commentApi = {
 
 // Event API
 export const eventApi = {
-  getAll: (params?: { where?: string; orderby?: string; limit?: number }) => {
+  getAll: async (params?: { where?: string; orderby?: string; limit?: number }) => {
     const query = new URLSearchParams();
     if (params?.where) query.append('where', params.where);
     if (params?.orderby) query.append('orderby', params.orderby);
     if (params?.limit) query.append('limit', params.limit.toString());
     
     const queryString = query.toString();
-    return apiRequest<any[]>(`/Event${queryString ? `?${queryString}` : ''}`);
+    const result = await apiRequest<any>(`/Event${queryString ? `?${queryString}` : ''}`);
+    return Array.isArray(result) ? result : (result.value || []);
   },
 
   getById: (id: string) => apiRequest<any>(`/Event/${id}`),
@@ -136,14 +142,15 @@ export const eventApi = {
 
 // MarketplaceItem API
 export const marketplaceApi = {
-  getAll: (params?: { where?: string; orderby?: string; limit?: number }) => {
+  getAll: async (params?: { where?: string; orderby?: string; limit?: number }) => {
     const query = new URLSearchParams();
     if (params?.where) query.append('where', params.where);
     if (params?.orderby) query.append('orderby', params.orderby);
     if (params?.limit) query.append('limit', params.limit.toString());
     
     const queryString = query.toString();
-    return apiRequest<any[]>(`/MarketplaceItem${queryString ? `?${queryString}` : ''}`);
+    const result = await apiRequest<any>(`/MarketplaceItem${queryString ? `?${queryString}` : ''}`);
+    return Array.isArray(result) ? result : (result.value || []);
   },
 
   getById: (id: string) => apiRequest<any>(`/MarketplaceItem/${id}`),
@@ -166,21 +173,26 @@ export const marketplaceApi = {
 
 // Chat API
 export const chatApi = {
-  getAll: (params?: { where?: string; orderby?: string; limit?: number }) => {
+  getAll: async (params?: { where?: string; orderby?: string; limit?: number }) => {
     const query = new URLSearchParams();
     if (params?.where) query.append('where', params.where);
     if (params?.orderby) query.append('orderby', params.orderby);
     if (params?.limit) query.append('limit', params.limit.toString());
     
     const queryString = query.toString();
-    return apiRequest<any[]>(`/Chat${queryString ? `?${queryString}` : ''}`);
+    const result = await apiRequest<any>(`/Chat${queryString ? `?${queryString}` : ''}`);
+    return Array.isArray(result) ? result : (result.value || []);
   },
 
-  getByChatRoom: (chatRoomId: string) =>
-    apiRequest<any[]>(`/Chat?where=chatRoomId=${chatRoomId}&orderby=createdDate`),
+  getByChatRoom: async (chatRoomId: string) => {
+    const result = await apiRequest<any>(`/Chat?where=chatRoomId=${chatRoomId}&orderby=createdDate`);
+    return Array.isArray(result) ? result : (result.value || []);
+  },
 
-  getByUser: (userId: string) =>
-    apiRequest<any[]>(`/Chat?where=senderId=${userId} OR receiverId=${userId}&orderby=-createdDate`),
+  getByUser: async (userId: string) => {
+    const result = await apiRequest<any>(`/Chat?where=senderId=${userId} OR receiverId=${userId}&orderby=-createdDate`);
+    return Array.isArray(result) ? result : (result.value || []);
+  },
 
   create: (chat: {
     title: string;

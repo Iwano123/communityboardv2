@@ -36,16 +36,7 @@ export default function RegisterPage() {
         return;
       }
 
-      // Check if email already exists
-      const checkResponse = await fetch(`/api/users?email=${encodeURIComponent(email)}`);
-      if (checkResponse.ok) {
-        const existingUsers = await checkResponse.json();
-        if (existingUsers && existingUsers.length > 0) {
-          setError('An account with this email already exists');
-          setLoading(false);
-          return;
-        }
-      }
+      // Note: Email check removed - backend will handle duplicate email validation
 
       // Move to next step
       setStep('complete');
@@ -76,13 +67,14 @@ export default function RegisterPage() {
       }
 
       // Register user
-      const response = await fetch('/api/users', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
+          username: email.split('@')[0], // Use email prefix as username
           email,
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -91,23 +83,30 @@ export default function RegisterPage() {
       });
 
       if (response.ok) {
-        const result = await response.json();
-        
-        // Auto-login after registration
-        const loginResponse = await fetch('/api/login', {
+        // Registration successful, now login
+        const loginResponse = await fetch('/api/auth/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
           body: JSON.stringify({
-            email,
+            usernameOrEmail: email,
             password: formData.password
           }),
         });
 
         if (loginResponse.ok) {
-          const user = await loginResponse.json();
+          const userData = await loginResponse.json();
+          // Map backend user to frontend User format
+          const user: User = {
+            id: userData.id || '',
+            firstName: userData.firstName || formData.firstName,
+            lastName: userData.lastName || formData.lastName,
+            email: userData.email || email,
+            role: userData.role || 'Customer',
+            created: new Date().toISOString()
+          };
           setUser(user);
           localStorage.removeItem('viewedPosts');
           navigate('/');

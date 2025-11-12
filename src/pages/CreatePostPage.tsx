@@ -50,21 +50,12 @@ export default function CreatePostPage() {
         content: formData.content,
         authorId: user.email || `${user.firstName} ${user.lastName}`.trim(),
         likes: 0,
-        isPublished: true, // Can be adjusted based on role
+        isPublished: true,
       };
 
-      // Add optional fields if they have values
-      if (formData.location) {
-        postData.location = formData.location;
-      }
-      if (formData.price && parseFloat(formData.price) > 0) {
-        postData.price = parseFloat(formData.price);
-      }
-      if (formData.contact_info) {
-        postData.contactInfo = formData.contact_info;
-      }
+      // Add image URL if provided (use lowercase 'imageUrl')
       if (formData.image_url) {
-        postData.ImageUrl = formData.image_url; // Use PascalCase for backend
+        postData.imageUrl = formData.image_url;
       }
 
       await postApi.create(postData);
