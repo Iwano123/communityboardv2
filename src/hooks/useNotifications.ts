@@ -108,12 +108,27 @@ export const useNotifications = (user: User | null) => {
   const unreadCount = notifications?.filter((n) => !n.read).length || 0;
 
   const markAsRead = async (notificationId: number) => {
-    // Hitta notifikationen för att få senderId
+    // Hitta notifikationen för att få senderId och postId (för kommentarer)
     const notification = notifications.find(n => n.id === notificationId);
     const senderId = (notification as any)?.senderId;
+    const postId = (notification as any)?.postId;
+    const notificationType = notification?.type;
     
     // Ta bort notifikationer från listan direkt (optimistisk uppdatering)
-    if (senderId) {
+    if (notificationType === 'comment' && senderId && postId) {
+      // För kommentarer, ta bort alla notifikationer från samma avsändare på samma post
+      setNotifications(prev => 
+        prev.filter(n => {
+          const nSenderId = (n as any)?.senderId;
+          const nPostId = (n as any)?.postId;
+          const nType = n.type;
+          return !(nType === 'comment' && 
+                   nSenderId?.toLowerCase() === senderId.toLowerCase() && 
+                   nPostId === postId);
+        })
+      );
+    } else if (senderId) {
+      // För meddelanden, ta bort alla notifikationer från samma avsändare
       setNotifications(prev => 
         prev.filter(n => {
           const nSenderId = (n as any)?.senderId;
@@ -121,6 +136,7 @@ export const useNotifications = (user: User | null) => {
         })
       );
     } else {
+      // Fallback: ta bort bara denna notifikation
       setNotifications(prev => 
         prev.filter(n => n.id !== notificationId)
       );

@@ -6,6 +6,7 @@ import MobileNav from './components/MobileNav';
 import { PushNotificationPrompt } from './components/PushNotificationPrompt';
 import { registerServiceWorker } from './utils/pushNotifications';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Toaster } from 'sonner';
 
 function AppContent() {
   const { user, logout } = useAuth();
@@ -52,6 +53,7 @@ function AppContent() {
       </main>
       <MobileNav />
       <PushNotificationPrompt user={user} />
+      <Toaster />
     </div>
   );
 }

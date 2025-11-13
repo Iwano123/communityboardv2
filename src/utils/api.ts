@@ -45,7 +45,16 @@ async function apiRequest<T>(
     });
     
     // Throw error with detailed message
-    const errorMessage = errorData?.error || errorData?.message || `Request failed with status ${response.status}`;
+    let errorMessage = errorData?.error || errorData?.message || `Request failed with status ${response.status}`;
+    
+    // Add detailed field information if available
+    if (errorData?.invalidFields && Array.isArray(errorData.invalidFields)) {
+      errorMessage += `\nInvalid fields: ${errorData.invalidFields.join(', ')}`;
+    }
+    if (errorData?.validFields && Array.isArray(errorData.validFields)) {
+      errorMessage += `\nValid fields: ${errorData.validFields.join(', ')}`;
+    }
+    
     const error = new Error(errorMessage);
     (error as any).status = response.status;
     (error as any).data = errorData;
@@ -151,6 +160,9 @@ export const eventApi = {
     location: string;
     organizerId?: string;
     isPublished?: boolean;
+    category?: string;
+    image_url?: string;
+    [key: string]: any; // Allow additional fields
   }) => apiRequest<any>('/Event', { method: 'POST', body: event }),
 
   update: (id: string, event: Partial<any>) =>
