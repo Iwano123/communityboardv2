@@ -183,6 +183,25 @@ public static partial class GetRoutes
                     return (null, false);
                 }
 
+                // Check for Value field (common in OrchardCore boolean/numeric fields)
+                // Pattern: { "Value": true } or { "Value": 42 } → true or 42
+                if (dict.ContainsKey("Value") && dict.Count == 1)
+                {
+                    var valueElement = dict["Value"];
+                    if (valueElement.ValueKind == JsonValueKind.True || valueElement.ValueKind == JsonValueKind.False)
+                    {
+                        return (valueElement.GetBoolean(), false);
+                    }
+                    else if (valueElement.ValueKind == JsonValueKind.Number)
+                    {
+                        return (valueElement.GetDouble(), false);
+                    }
+                    else if (valueElement.ValueKind == JsonValueKind.String)
+                    {
+                        return (valueElement.GetString(), false);
+                    }
+                }
+
                 // Check for UserPickerField (UserIds + UserNames arrays)
                 if ((dict.ContainsKey("UserIds") || dict.ContainsKey("userIds")) &&
                     (dict.ContainsKey("UserNames") || dict.ContainsKey("userNames")))
@@ -402,6 +421,25 @@ public static partial class GetRoutes
                 if (dict.ContainsKey("Text") && dict.Count == 1)
                 {
                     return dict["Text"].GetString();
+                }
+
+                // Check for Value field (common in OrchardCore boolean/numeric fields)
+                // Pattern: { "Value": true } or { "Value": 42 } → true or 42
+                if (dict.ContainsKey("Value") && dict.Count == 1)
+                {
+                    var valueElement = dict["Value"];
+                    if (valueElement.ValueKind == JsonValueKind.True || valueElement.ValueKind == JsonValueKind.False)
+                    {
+                        return valueElement.GetBoolean();
+                    }
+                    else if (valueElement.ValueKind == JsonValueKind.Number)
+                    {
+                        return valueElement.GetDouble();
+                    }
+                    else if (valueElement.ValueKind == JsonValueKind.String)
+                    {
+                        return valueElement.GetString();
+                    }
                 }
 
                 // Check for ContentItemIds array (non-populated relations)

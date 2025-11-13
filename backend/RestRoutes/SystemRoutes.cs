@@ -349,7 +349,7 @@ public static class SystemRoutes
             }
 
             // Hantera kommentar-notifikationer
-            // Gruppera kommentarer per avsändare och post
+            // Gruppera kommentarer per avsändare och post (samma logik som meddelanden)
             var commentsBySenderAndPost = new Dictionary<string, Dictionary<string, object>>();
 
             foreach (var comment in cleanComments)
@@ -358,12 +358,8 @@ public static class SystemRoutes
                 var postId = comment.ContainsKey("postId") ? comment["postId"]?.ToString() ?? "" : "";
                 var authorId = comment.ContainsKey("authorId") ? comment["authorId"]?.ToString() ?? "" : "";
                 var commentContent = comment.ContainsKey("content") ? comment["content"]?.ToString() ?? "" : "";
-                // Kontrollera om kommentaren är markerad som läst
-                var isRead = false;
-                if (comment.ContainsKey("isRead") && comment["isRead"] is bool readValue)
-                {
-                    isRead = readValue;
-                }
+                // Kontrollera om kommentaren är markerad som läst (samma logik som meddelanden)
+                var isRead = comment.ContainsKey("isRead") && comment["isRead"] is bool readValue ? readValue : false;
                 // Extrahera createdDate säkert - kan vara sträng eller Dictionary
                 var createdDate = "";
                 if (comment.ContainsKey("createdDate"))
@@ -468,7 +464,8 @@ public static class SystemRoutes
                                              authorUsername != currentUser.UserName && authorUsername != postOwnerUsername &&
                                              authorId != postOwner;
                         
-                        // Skapa notifikation endast om kommentaren är för denna användare, postens ägare är den inloggade användaren, och kommentaren inte är markerad som läst
+                        // Skapa notifikation endast om kommentaren är för denna användare, postens ägare är den inloggade användaren, 
+                        // och kommentaren inte är markerad som läst (samma logik som meddelanden)
                         if (isPostOwner && isNotSelfComment && !string.IsNullOrEmpty(commentContent) && !isRead)
                         {
                             // Använd kombinationen av authorId och postId som nyckel för gruppering
@@ -797,6 +794,9 @@ public static class SystemRoutes
                         Console.WriteLine($"Error marking message as read: {ex.Message}");
                     }
                 }
+                
+                // Spara alla ändringar till databasen efter att alla meddelanden är markerade som lästa
+                await session.SaveChangesAsync();
             }
             else if (!string.IsNullOrEmpty(targetCommentKey))
             {
@@ -813,6 +813,7 @@ public static class SystemRoutes
                 {
                     var targetAuthorId = parts[0];
                     var targetPostId = parts[1];
+                    Console.WriteLine($"[DEBUG] Marking comments as read for authorId: {targetAuthorId}, postId: {targetPostId}");
 
                     foreach (var item in commentItemsToMark)
                     {
@@ -832,6 +833,7 @@ public static class SystemRoutes
                             
                             if (commentPostId == targetPostId && normalizedCommentAuthorId == normalizedTargetAuthorId)
                             {
+                                Console.WriteLine($"[DEBUG] Found matching comment: {item.ContentItemId}, postId: {commentPostId}, authorId: {commentAuthorId}");
                                 var contentItem = await contentManager.GetAsync(item.ContentItemId);
                                 if (contentItem != null)
                                 {
@@ -839,27 +841,33 @@ public static class SystemRoutes
                                     if (contentItem.Content.ContainsKey("Comment"))
                                     {
                                         var commentContent = contentItem.Content["Comment"] as Dictionary<string, object>;
-                                        if (commentContent != null && commentContent.ContainsKey("IsRead"))
+                                        if (commentContent != null)
                                         {
-                                            var isReadField = commentContent["IsRead"] as Dictionary<string, object>;
-                                            if (isReadField != null)
+                                            // Skapa eller uppdatera IsRead-fältet (samma logik som meddelanden)
+                                            if (commentContent.ContainsKey("IsRead"))
                                             {
-                                                isReadField["Value"] = true;
+                                                var isReadField = commentContent["IsRead"] as Dictionary<string, object>;
+                                                if (isReadField != null)
+                                                {
+                                                    isReadField["Value"] = true;
+                                                    Console.WriteLine($"[DEBUG] Updated existing IsRead field to true for comment {item.ContentItemId}");
+                                                }
+                                                else
+                                                {
+                                                    commentContent["IsRead"] = new Dictionary<string, object> { ["Value"] = true };
+                                                    Console.WriteLine($"[DEBUG] Created new IsRead field (was null) for comment {item.ContentItemId}");
+                                                }
                                             }
                                             else
                                             {
-                                                // Om det inte finns som dictionary, skapa det
                                                 commentContent["IsRead"] = new Dictionary<string, object> { ["Value"] = true };
+                                                Console.WriteLine($"[DEBUG] Created new IsRead field (didn't exist) for comment {item.ContentItemId}");
                                             }
+                                            
+                                            await contentManager.UpdateAsync(contentItem);
+                                            await contentManager.PublishAsync(contentItem);
+                                            Console.WriteLine($"[DEBUG] Comment {item.ContentItemId} updated and published");
                                         }
-                                        else if (commentContent != null)
-                                        {
-                                            // Om IsRead inte finns, skapa det programmatiskt
-                                            commentContent["IsRead"] = new Dictionary<string, object> { ["Value"] = true };
-                                        }
-                                        
-                                        await contentManager.UpdateAsync(contentItem);
-                                        await contentManager.PublishAsync(contentItem);
                                     }
                                 }
                             }
@@ -870,6 +878,9 @@ public static class SystemRoutes
                         }
                     }
                 }
+                
+                // Spara alla ändringar till databasen efter att alla kommentarer är markerade som lästa
+                await session.SaveChangesAsync();
             }
 
             return Results.Json(new { success = true });
