@@ -134,26 +134,6 @@ export default function LoginPage() {
               </div>
             </Card.Body>
           </Card>
-
-          <Card className="card-twitter mt-3">
-            <Card.Body className="twitter-spacing text-center">
-              <h6 className="text-twitter-dark fw-bold">Demo Accounts</h6>
-              <div className="text-twitter-secondary small">
-                <div className="mb-2">
-                  <strong>Admin:</strong> thomas@nodehill.com
-                </div>
-                <div className="mb-2">
-                  <strong>User:</strong> olle@nodehill.com
-                </div>
-                <div className="mb-2">
-                  <strong>User:</strong> maria@nodehill.com
-                </div>
-                <div className="text-twitter-primary fw-semibold">
-                  Password: 12345678
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
         </Col>
       </Row>
     </Container>

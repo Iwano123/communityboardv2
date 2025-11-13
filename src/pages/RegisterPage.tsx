@@ -1,6 +1,7 @@
 import { Card, Container, Row, Col, Form, Button, Alert } from 'react-bootstrap';
 import { useState } from 'react';
-import { useNavigate, Link, useOutletContext } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import type { User } from '../interfaces/BulletinBoard';
 
 RegisterPage.route = {
@@ -11,7 +12,7 @@ RegisterPage.route = {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const [, , , setUser] = useOutletContext<[any, any, User | null, (user: User | null) => void]>();
+  const { login } = useAuth();
   const [step, setStep] = useState<'email' | 'complete'>('email');
   const [email, setEmail] = useState('');
   const [formData, setFormData] = useState({
@@ -66,6 +67,18 @@ export default function RegisterPage() {
         return;
       }
 
+      // Generate username from email (sanitize special characters)
+      const emailPrefix = email.split('@')[0];
+      // Remove special characters and replace with underscore, keep only alphanumeric and underscore
+      const username = emailPrefix.replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 50);
+      
+      console.log('Registering user with:', {
+        username,
+        email,
+        firstName: formData.firstName,
+        lastName: formData.lastName
+      });
+
       // Register user
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -74,7 +87,7 @@ export default function RegisterPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          username: email.split('@')[0], // Use email prefix as username
+          username,
           email,
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -83,6 +96,19 @@ export default function RegisterPage() {
       });
 
       if (response.ok) {
+        // Registration successful, get the response data
+        const registerData = await response.json();
+        console.log('Registration successful:', registerData);
+        
+        // Use username for login (since that's what was created)
+        // Fallback to email if username is not available
+        const loginIdentifier = registerData.username || username || email;
+        
+        console.log('Attempting login with:', loginIdentifier);
+        
+        // Small delay to ensure user is fully saved in database
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         // Registration successful, now login
         const loginResponse = await fetch('/api/auth/login', {
           method: 'POST',
@@ -91,37 +117,87 @@ export default function RegisterPage() {
           },
           credentials: 'include',
           body: JSON.stringify({
-            usernameOrEmail: email,
+            usernameOrEmail: loginIdentifier,
             password: formData.password
           }),
         });
 
         if (loginResponse.ok) {
           const userData = await loginResponse.json();
-          // Map backend user to frontend User format
-          const user: User = {
-            id: userData.id || '',
-            firstName: userData.firstName || formData.firstName,
-            lastName: userData.lastName || formData.lastName,
+          console.log('Login successful:', userData);
+          
+          // Map backend user to frontend User format (same as LoginPage)
+          const mappedUser: User = {
+            id: 0,
+            firstName: userData.firstName || formData.firstName || '',
+            lastName: userData.lastName || formData.lastName || '',
             email: userData.email || email,
-            role: userData.role || 'Customer',
-            created: new Date().toISOString()
+            role: (Array.isArray(userData.roles) && userData.roles.includes('Administrator')) ? 'admin' : 
+                  (Array.isArray(userData.roles) && userData.roles.includes('Moderator')) ? 'moderator' : 'user',
+            created: new Date().toISOString(),
           };
-          setUser(user);
+          
+          // Use login function from AuthContext to update state
+          login(mappedUser);
           localStorage.removeItem('viewedPosts');
           navigate('/');
         } else {
-          // Registration successful but login failed - redirect to login
-          navigate('/login');
+          // Registration successful but login failed
+          const loginError = await loginResponse.text().catch(() => 'Unknown error');
+          console.error('Login failed after registration:', {
+            status: loginResponse.status,
+            statusText: loginResponse.statusText,
+            error: loginError
+          });
+          
+          // Show error but allow user to manually login
+          setError(`Registration successful! However, automatic login failed. Please try logging in manually with your email: ${email}`);
+          
+          // Redirect to login after a delay
+          setTimeout(() => {
+            navigate('/login');
+          }, 3000);
         }
       } else {
+        // Get response status and content type
+        const contentType = response.headers.get('content-type');
+        console.error('Registration failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          contentType: contentType,
+          url: response.url
+        });
+        
+        let errorMessage = 'Registration failed. Please try again.';
+        
         try {
-          const errorData = await response.json();
-          setError(errorData.error || 'Registration failed. Please try again.');
-        } catch (jsonErr) {
-          // If response is not JSON, show a generic error
-          setError('Registration failed. Please try again.');
+          // Try to parse as JSON first
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            console.error('Registration error response (JSON):', errorData);
+            
+            // Build error message from error and details
+            errorMessage = errorData.error || errorMessage;
+            
+            // If there are details (validation errors), append them
+            if (errorData.details && typeof errorData.details === 'object') {
+              const detailMessages = Object.values(errorData.details).filter(Boolean);
+              if (detailMessages.length > 0) {
+                errorMessage += '\n\n' + detailMessages.join('\n');
+              }
+            }
+          } else {
+            // Try to get text response
+            const errorText = await response.text();
+            console.error('Registration error response (text):', errorText);
+            errorMessage = errorText || errorMessage;
+          }
+        } catch (parseErr) {
+          console.error('Error parsing response:', parseErr);
+          errorMessage = `Registration failed (Status: ${response.status}). Please check console for details.`;
         }
+        
+        setError(errorMessage);
       }
     } catch (err) {
       // Network error or other exception
@@ -174,7 +250,7 @@ export default function RegisterPage() {
                 <p className="text-twitter-secondary mb-4">Enter your email to sign up for this app</p>
 
                 {error && (
-                  <Alert variant="danger" className="rounded-pill mb-3">
+                  <Alert variant="danger" className="mb-3" style={{ whiteSpace: 'pre-wrap' }}>
                     {error}
                   </Alert>
                 )}
@@ -240,7 +316,7 @@ export default function RegisterPage() {
               <h2 className="fw-bold text-twitter-dark mb-4 text-center">Complete your account</h2>
 
               {error && (
-                <Alert variant="danger" className="rounded-pill mb-3 text-center">
+                <Alert variant="danger" className="mb-3" style={{ whiteSpace: 'pre-wrap' }}>
                   {error}
                 </Alert>
               )}
