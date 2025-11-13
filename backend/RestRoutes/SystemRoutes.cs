@@ -12,9 +12,31 @@ using OrchardCore.Users.Models;
 using YesSql;
 using YesSql.Services;
 using System.Text.Json;
+using System.IO;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 public static class SystemRoutes
 {
+    private static void WriteDebug(string message)
+    {
+        Console.WriteLine(message);
+        try
+        {
+            var appDataPath = Path.Combine(Directory.GetCurrentDirectory(), "App_Data");
+            if (!Directory.Exists(appDataPath))
+            {
+                Directory.CreateDirectory(appDataPath);
+            }
+            var logPath = Path.Combine(appDataPath, "debug-notifications.log");
+            File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message}\n");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR Writing Debug] {ex.Message}");
+        }
+    }
+    
     private static bool IsAdministrator(HttpContext context)
     {
         return context.User.Identity?.IsAuthenticated == true &&
@@ -138,19 +160,23 @@ public static class SystemRoutes
             [FromServices] IContentManager contentManager,
             [FromServices] UserManager<IUser> userManager) =>
         {
+            WriteDebug($"[DEBUG NOTIFICATIONS API] GET /api/notifications called");
             // Must be authenticated
             if (context.User?.Identity?.IsAuthenticated != true)
             {
+                WriteDebug($"[DEBUG NOTIFICATIONS API] User not authenticated");
                 return Results.Json(new List<object>());
             }
-
+            
             var currentUser = await userManager.GetUserAsync(context.User);
             if (currentUser == null)
             {
+                WriteDebug($"[DEBUG NOTIFICATIONS API] Current user is null");
                 return Results.Json(new List<object>());
             }
 
             var userEmail = (currentUser as User)?.Email ?? currentUser.UserName ?? "";
+            WriteDebug($"[DEBUG NOTIFICATIONS API] User authenticated: {userEmail}");
 
             // Hämta alla Chat-meddelanden och Comment-meddelanden direkt från databasen
             var chatItems = await session
@@ -182,6 +208,7 @@ public static class SystemRoutes
             // Clean up messages and comments manually
             var cleanMessages = chatPlainObjects.Select(obj => GetRoutes.CleanObject(obj, "Chat", null)).ToList();
             var cleanComments = commentPlainObjects.Select(obj => GetRoutes.CleanObject(obj, "Comment", null)).ToList();
+            WriteDebug($"[DEBUG NOTIFICATIONS API] Found {cleanComments.Count} comments to check for notifications");
 
             // Gruppera meddelanden per avsändare - bara ta det senaste från varje avsändare
             var messagesBySender = new Dictionary<string, Dictionary<string, object>>();
@@ -358,8 +385,39 @@ public static class SystemRoutes
                 var postId = comment.ContainsKey("postId") ? comment["postId"]?.ToString() ?? "" : "";
                 var authorId = comment.ContainsKey("authorId") ? comment["authorId"]?.ToString() ?? "" : "";
                 var commentContent = comment.ContainsKey("content") ? comment["content"]?.ToString() ?? "" : "";
+                
                 // Kontrollera om kommentaren är markerad som läst (samma logik som meddelanden)
-                var isRead = comment.ContainsKey("isRead") && comment["isRead"] is bool readValue ? readValue : false;
+                // CleanObject konverterar till camelCase, så IsRead blir isRead
+                var isRead = false;
+                if (comment.ContainsKey("isRead"))
+                {
+                    var isReadValue = comment["isRead"];
+                    WriteDebug($"[DEBUG NOTIFICATION] Comment - postId: {postId}, authorId: {authorId}, isRead exists: true, type: {isReadValue?.GetType()?.Name}, value: {isReadValue}");
+                    if (isReadValue is bool boolValue)
+                    {
+                        isRead = boolValue;
+                        WriteDebug($"[DEBUG NOTIFICATION] Comment - postId: {postId}, authorId: {authorId}, isRead (bool): {isRead}");
+                    }
+                    else
+                    {
+                        WriteDebug($"[DEBUG NOTIFICATION] Comment - postId: {postId}, authorId: {authorId}, isRead is NOT bool, value: {isReadValue}");
+                    }
+                }
+                else if (comment.ContainsKey("IsRead"))
+                {
+                    // Fallback för om det inte konverteras till camelCase
+                    var isReadValue = comment["IsRead"];
+                    WriteDebug($"[DEBUG NOTIFICATION] Comment - postId: {postId}, authorId: {authorId}, IsRead exists: true, type: {isReadValue?.GetType()?.Name}, value: {isReadValue}");
+                    if (isReadValue is bool boolValue)
+                    {
+                        isRead = boolValue;
+                        WriteDebug($"[DEBUG NOTIFICATION] Comment - postId: {postId}, authorId: {authorId}, IsRead (bool): {isRead}");
+                    }
+                }
+                else
+                {
+                    WriteDebug($"[DEBUG NOTIFICATION] Comment - postId: {postId}, authorId: {authorId}, isRead/IsRead key does NOT exist. Available keys: {string.Join(", ", comment.Keys)}");
+                }
                 // Extrahera createdDate säkert - kan vara sträng eller Dictionary
                 var createdDate = "";
                 if (comment.ContainsKey("createdDate"))
@@ -466,6 +524,7 @@ public static class SystemRoutes
                         
                         // Skapa notifikation endast om kommentaren är för denna användare, postens ägare är den inloggade användaren, 
                         // och kommentaren inte är markerad som läst (samma logik som meddelanden)
+                        WriteDebug($"[DEBUG NOTIFICATION DECISION] postId: {postId}, authorId: {authorId}, isPostOwner: {isPostOwner}, isNotSelfComment: {isNotSelfComment}, hasContent: {!string.IsNullOrEmpty(commentContent)}, isRead: {isRead}, willCreate: {isPostOwner && isNotSelfComment && !string.IsNullOrEmpty(commentContent) && !isRead}");
                         if (isPostOwner && isNotSelfComment && !string.IsNullOrEmpty(commentContent) && !isRead)
                         {
                             // Använd kombinationen av authorId och postId som nyckel för gruppering
@@ -588,6 +647,7 @@ public static class SystemRoutes
             var allNotifications = new List<Dictionary<string, object>>();
             allNotifications.AddRange(messagesBySender.Values);
             allNotifications.AddRange(commentsBySenderAndPost.Values);
+            WriteDebug($"[DEBUG NOTIFICATIONS API] Created {commentsBySenderAndPost.Count} comment notifications, {messagesBySender.Count} message notifications, total: {allNotifications.Count}");
 
             // Sortera alla notifikationer efter created_at (nyaste först)
             var sortedNotifications = allNotifications.OrderByDescending(n => 
@@ -761,31 +821,34 @@ public static class SystemRoutes
                         var contentItem = await contentManager.GetAsync(item.ContentItemId);
                         if (contentItem != null)
                         {
-                            // Uppdatera isRead field direkt i Content-dictionaryn
+                            // Uppdatera IsRead field direkt i Content (samma metod som PutRoutes)
                             if (contentItem.Content.ContainsKey("Chat"))
                             {
-                                var chatContent = contentItem.Content["Chat"] as Dictionary<string, object>;
-                                if (chatContent != null && chatContent.ContainsKey("IsRead"))
+                                // Använd JObject-syntax för att sätta IsRead-fältet
+                                // Strukturen är: Content["Chat"]["IsRead"] = { "Value": true }
+                                if (contentItem.Content["Chat"] is JObject chatContent)
                                 {
-                                    var isReadField = chatContent["IsRead"] as Dictionary<string, object>;
-                                    if (isReadField != null)
-                                    {
-                                        isReadField["Value"] = true;
-                                    }
-                                    else
-                                    {
-                                        // Om det inte finns som dictionary, skapa det
-                                        chatContent["IsRead"] = new Dictionary<string, object> { ["Value"] = true };
-                                    }
+                                    chatContent["IsRead"] = new JObject { ["Value"] = true };
                                 }
-                                else if (chatContent != null)
+                                else
                                 {
-                                    // Om IsRead inte finns, skapa det
-                                    chatContent["IsRead"] = new Dictionary<string, object> { ["Value"] = true };
+                                    // Om det inte är JObject, konvertera det först
+                                    try
+                                    {
+                                        var chatJsonString = JsonConvert.SerializeObject(contentItem.Content["Chat"]);
+                                        var chatJObject = JObject.Parse(chatJsonString);
+                                        chatJObject["IsRead"] = new JObject { ["Value"] = true };
+                                        contentItem.Content["Chat"] = chatJObject;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        WriteDebug($"[DEBUG MARK READ] ERROR updating Chat IsRead: {ex.Message}");
+                                    }
                                 }
                                 
                                 await contentManager.UpdateAsync(contentItem);
                                 await contentManager.PublishAsync(contentItem);
+                                WriteDebug($"[DEBUG MARK READ] Chat message {item.ContentItemId} marked as read");
                             }
                         }
                     }
@@ -813,7 +876,7 @@ public static class SystemRoutes
                 {
                     var targetAuthorId = parts[0];
                     var targetPostId = parts[1];
-                    Console.WriteLine($"[DEBUG] Marking comments as read for authorId: {targetAuthorId}, postId: {targetPostId}");
+                    WriteDebug($"[DEBUG MARK READ] Marking comments as read for authorId: {targetAuthorId}, postId: {targetPostId}");
 
                     foreach (var item in commentItemsToMark)
                     {
@@ -833,40 +896,120 @@ public static class SystemRoutes
                             
                             if (commentPostId == targetPostId && normalizedCommentAuthorId == normalizedTargetAuthorId)
                             {
-                                Console.WriteLine($"[DEBUG] Found matching comment: {item.ContentItemId}, postId: {commentPostId}, authorId: {commentAuthorId}");
+                                WriteDebug($"[DEBUG MARK READ] Found matching comment: {item.ContentItemId}, postId: {commentPostId}, authorId: {commentAuthorId}");
                                 var contentItem = await contentManager.GetAsync(item.ContentItemId);
+                                WriteDebug($"[DEBUG MARK READ] contentItem is null: {contentItem == null}");
                                 if (contentItem != null)
                                 {
+                                    WriteDebug($"[DEBUG MARK READ] contentItem.Content contains Comment: {contentItem.Content.ContainsKey("Comment")}");
                                     // Uppdatera IsRead field direkt i Content-dictionaryn
+                                    // contentItem.Content är en JObject, så vi behöver komma åt det korrekt
                                     if (contentItem.Content.ContainsKey("Comment"))
                                     {
-                                        var commentContent = contentItem.Content["Comment"] as Dictionary<string, object>;
-                                        if (commentContent != null)
+                                        var commentContentToken = contentItem.Content["Comment"];
+                                        WriteDebug($"[DEBUG MARK READ] commentContentToken is null: {commentContentToken == null}, type: {commentContentToken?.GetType()?.Name}");
+                                        
+                                        if (commentContentToken != null)
                                         {
-                                            // Skapa eller uppdatera IsRead-fältet (samma logik som meddelanden)
-                                            if (commentContent.ContainsKey("IsRead"))
+                                            // Konvertera till JObject - hantera både JObject och JsonDynamicObject
+                                            JObject? commentContent = null;
+                                            
+                                            if (commentContentToken is JObject jo)
                                             {
-                                                var isReadField = commentContent["IsRead"] as Dictionary<string, object>;
-                                                if (isReadField != null)
+                                                commentContent = jo;
+                                            }
+                                            else if (commentContentToken is JToken token)
+                                            {
+                                                // Försök konvertera JToken till JObject
+                                                commentContent = token as JObject;
+                                                if (commentContent == null && token.Type == JTokenType.Object)
                                                 {
-                                                    isReadField["Value"] = true;
-                                                    Console.WriteLine($"[DEBUG] Updated existing IsRead field to true for comment {item.ContentItemId}");
-                                                }
-                                                else
-                                                {
-                                                    commentContent["IsRead"] = new Dictionary<string, object> { ["Value"] = true };
-                                                    Console.WriteLine($"[DEBUG] Created new IsRead field (was null) for comment {item.ContentItemId}");
+                                                    commentContent = token.ToObject<JObject>();
                                                 }
                                             }
                                             else
                                             {
-                                                commentContent["IsRead"] = new Dictionary<string, object> { ["Value"] = true };
-                                                Console.WriteLine($"[DEBUG] Created new IsRead field (didn't exist) for comment {item.ContentItemId}");
+                                                // Hantera JsonDynamicObject och andra typer genom serialisering
+                                                try
+                                                {
+                                                    var commentJsonString = JsonConvert.SerializeObject(commentContentToken);
+                                                    commentContent = JObject.Parse(commentJsonString);
+                                                    WriteDebug($"[DEBUG MARK READ] Converted JsonDynamicObject to JObject via serialization");
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    WriteDebug($"[DEBUG MARK READ] ERROR converting to JObject: {ex.Message}");
+                                                }
                                             }
                                             
-                                            await contentManager.UpdateAsync(contentItem);
-                                            await contentManager.PublishAsync(contentItem);
-                                            Console.WriteLine($"[DEBUG] Comment {item.ContentItemId} updated and published");
+                                            WriteDebug($"[DEBUG MARK READ] commentContent (JObject) is null: {commentContent == null}");
+                                            
+                                            if (commentContent != null)
+                                            {
+                                                // Skapa eller uppdatera IsRead-fältet
+                                                // IsRead field i Orchard Core är strukturerat som: { "IsRead": { "Value": true/false } }
+                                                if (commentContent.ContainsKey("IsRead"))
+                                                {
+                                                    var isReadToken = commentContent["IsRead"];
+                                                    WriteDebug($"[DEBUG MARK READ] IsRead field exists, type: {isReadToken?.GetType()?.Name}");
+                                                    
+                                                    if (isReadToken is JObject isReadObj)
+                                                    {
+                                                        isReadObj["Value"] = true;
+                                                        WriteDebug($"[DEBUG MARK READ] Updated existing IsRead field to true for comment {item.ContentItemId}");
+                                                    }
+                                                    else
+                                                    {
+                                                        // Om det inte är ett JObject, skapa ett nytt
+                                                        commentContent["IsRead"] = new JObject { ["Value"] = true };
+                                                        WriteDebug($"[DEBUG MARK READ] Created new IsRead field (was not JObject) for comment {item.ContentItemId}");
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    // Skapa IsRead-fältet om det inte finns
+                                                    commentContent["IsRead"] = new JObject { ["Value"] = true };
+                                                    WriteDebug($"[DEBUG MARK READ] Created new IsRead field (didn't exist) for comment {item.ContentItemId}");
+                                                }
+                                                
+                                                // Uppdatera contentItem.Content med den modifierade commentContent
+                                                contentItem.Content["Comment"] = commentContent;
+                                                
+                                                await contentManager.UpdateAsync(contentItem);
+                                                await contentManager.PublishAsync(contentItem);
+                                                WriteDebug($"[DEBUG MARK READ] Comment {item.ContentItemId} updated and published with IsRead=true");
+                                                
+                                                // Verify by reading it back
+                                                var verifyItem = await contentManager.GetAsync(item.ContentItemId);
+                                                if (verifyItem != null && verifyItem.Content.ContainsKey("Comment"))
+                                                {
+                                                    var verifyCommentToken = verifyItem.Content["Comment"];
+                                                    if (verifyCommentToken is JObject verifyCommentContent)
+                                                    {
+                                                        if (verifyCommentContent.ContainsKey("IsRead"))
+                                                        {
+                                                            var verifyIsReadToken = verifyCommentContent["IsRead"];
+                                                            if (verifyIsReadToken is JObject verifyIsReadObj && verifyIsReadObj.ContainsKey("Value"))
+                                                            {
+                                                                var verifyIsReadValue = verifyIsReadObj["Value"]?.ToObject<bool>();
+                                                                WriteDebug($"[DEBUG MARK READ] Verified IsRead after update: {verifyIsReadValue}");
+                                                            }
+                                                            else
+                                                            {
+                                                                WriteDebug($"[DEBUG MARK READ] WARNING: IsRead field exists but Value not found!");
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            WriteDebug($"[DEBUG MARK READ] WARNING: IsRead field not found after update!");
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        WriteDebug($"[DEBUG MARK READ] WARNING: Comment content is not JObject after update!");
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -874,7 +1017,8 @@ public static class SystemRoutes
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"Error marking comment as read: {ex.Message}");
+                            WriteDebug($"[DEBUG MARK READ] ERROR marking comment as read: {ex.Message}");
+                            WriteDebug($"[DEBUG MARK READ] ERROR StackTrace: {ex.StackTrace}");
                         }
                     }
                 }
