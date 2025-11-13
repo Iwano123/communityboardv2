@@ -99,6 +99,7 @@
   display: flex;
   flex-direction: column;
   background: white;
+  overflow: hidden;
 }
 
 .chat-header {
@@ -124,10 +125,12 @@
 .messages-list {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  min-height: 0;
 }
 
 .message {
@@ -191,6 +194,8 @@
   padding: 1.5rem;
   border-top: 1px solid #e5e7eb;
   background: white;
+  flex-shrink: 0;
+  margin-top: auto;
 }
 
 .message-input {
@@ -533,14 +538,18 @@
 
   .messages-main {
     width: 100%;
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
+    height: 100vh;
     z-index: 10;
     transform: translateX(100%);
     transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   /* When a chat is selected, show main and hide sidebar */
@@ -552,6 +561,11 @@
 
   .messages-page.chat-selected .messages-main {
     transform: translateX(0);
+    position: fixed;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   /* Add back button to chat header on mobile */
@@ -560,6 +574,9 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    flex-shrink: 0;
+    margin-top: 60px; /* Space below top navigation */
+    padding-top: 1rem;
   }
 
   .chat-header .back-button {
@@ -629,6 +646,7 @@
     padding: 1rem;
     gap: 0.75rem;
     overflow-y: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     flex: 1;
     min-height: 0; /* Important for flexbox scrolling */
@@ -661,6 +679,17 @@
   .message-input-form {
     padding: 0.75rem 1rem;
     gap: 0.5rem;
+    flex-shrink: 0;
+    margin-top: auto;
+    margin-bottom: 70px; /* Space above bottom navigation */
+    background: white;
+    position: relative;
+    z-index: 1;
+  }
+  
+  [data-bs-theme="dark"] .message-input-form,
+  .dark .message-input-form {
+    background: #1e293b;
   }
 
   .message-input {
