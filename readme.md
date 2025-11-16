@@ -48,7 +48,7 @@ A full-stack community board application built with React (Vite + TypeScript) fr
     
 4.  **Start the application**
    ```bash
-   npm start
+    npm start
    ```
 
    This will:
