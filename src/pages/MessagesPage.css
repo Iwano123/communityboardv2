@@ -1,7 +1,31 @@
+/* Prevent parent main from scrolling */
+main.messages-page-active,
+main:has(.messages-page) {
+  overflow: hidden !important;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+body.messages-page-active,
+body:has(.messages-page) {
+  overflow: hidden !important;
+}
+
+#root.messages-page-active,
+#root:has(.messages-page) {
+  overflow: hidden !important;
+  overflow-y: hidden !important;
+}
+
 .messages-page {
   display: flex;
   height: calc(100vh - 80px);
+  max-height: calc(100vh - 80px);
   background: #f9fafb;
+  overflow: hidden; /* Prevent page-level scrolling */
+  position: relative;
+  flex-shrink: 0;
 }
 
 .messages-sidebar {
@@ -10,6 +34,8 @@
   border-right: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* Prevent sidebar from causing page scroll */
+  min-height: 0; /* Allow flex shrinking */
 }
 
 .sidebar-header {
@@ -29,6 +55,8 @@
 .chat-rooms-list {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0; /* Important for flexbox scrolling */
 }
 
 .chat-room-item {
@@ -511,11 +539,36 @@
    ============================================ */
 
 @media (max-width: 768px) {
+  /* Prevent root and main from scrolling when messages page is active */
+  body.messages-page-active,
+  body:has(.messages-page) {
+    overflow: hidden !important;
+  }
+
+  #root.messages-page-active,
+  #root:has(.messages-page) {
+    overflow: hidden !important;
+    overflow-y: hidden !important;
+  }
+
+  /* Prevent parent main from scrolling on mobile */
+  main:has(.messages-page),
+  .messages-page-active ~ main,
+  main.messages-page-active {
+    overflow: hidden !important;
+    height: calc(100vh - 60px - 70px) !important;
+    max-height: calc(100vh - 60px - 70px) !important;
+    position: relative;
+    flex-grow: 0 !important;
+  }
+
   .messages-page {
     height: calc(100vh - 60px - 70px); /* header + bottom nav */
+    max-height: calc(100vh - 60px - 70px);
     flex-direction: column;
     position: relative;
     overflow: hidden;
+    flex-shrink: 0;
   }
 
   /* Prevent page scroll when keyboard is open */
@@ -531,9 +584,11 @@
   /* Show only sidebar OR main at a time */
   .messages-sidebar {
     width: 100%;
+    height: 100%; /* Fill available height */
     border-right: none;
     border-bottom: 1px solid #e5e7eb;
     transition: transform 0.3s ease;
+    overflow: hidden; /* Prevent sidebar from causing page scroll */
   }
 
   .messages-main {
@@ -550,6 +605,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    will-change: transform; /* Optimize transform performance */
   }
 
   /* When a chat is selected, show main and hide sidebar */
@@ -566,6 +622,18 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    will-change: transform; /* Optimize transform performance */
+  }
+  
+  /* Prevent scroll jump when chat is selected */
+  .messages-page.chat-selected {
+    scroll-behavior: auto;
+  }
+  
+  /* Ensure body and root don't scroll when chat is selected */
+  body.messages-page-active:has(.chat-selected),
+  #root.messages-page-active:has(.chat-selected) {
+    overflow: hidden !important;
   }
 
   /* Add back button to chat header on mobile */

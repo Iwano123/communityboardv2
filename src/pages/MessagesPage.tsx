@@ -79,6 +79,55 @@ export default function MessagesPage() {
     }
   }, [isAuthenticated, user, notifications.length]); // Removed markAsRead from dependencies to avoid infinite loops
 
+  // Prevent page scrolling when MessagesPage is mounted
+  useEffect(() => {
+    document.body.classList.add('messages-page-active');
+    const root = document.getElementById('root');
+    const main = document.querySelector('main');
+    
+    if (root) {
+      root.classList.add('messages-page-active');
+    }
+    if (main) {
+      main.classList.add('messages-page-active');
+    }
+    
+    return () => {
+      document.body.classList.remove('messages-page-active');
+      if (root) {
+        root.classList.remove('messages-page-active');
+      }
+      if (main) {
+        main.classList.remove('messages-page-active');
+      }
+    };
+  }, []);
+
+  // Prevent scroll jump when switching between sidebar and chat view
+  useEffect(() => {
+    // Ensure scroll is at top when switching views
+    if (selectedChatRoom) {
+      // Immediately set scroll to 0
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      
+      // Use requestAnimationFrame to ensure it stays at 0 after DOM updates
+      requestAnimationFrame(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      });
+      
+      // Double-check after a short delay
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 100);
+    }
+  }, [selectedChatRoom]);
+
   useEffect(() => {
     if (isAuthenticated && user) {
       loadChatRooms();
