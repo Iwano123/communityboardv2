@@ -41,7 +41,12 @@ A full-stack community board application built with React (Vite + TypeScript) fr
    npm install
    ```
 
-3. **Start the application**
+3. **Get seed data**
+    ```bash
+    npm run restore
+    ```
+    
+4.  **Start the application**
    ```bash
    npm start
    ```
@@ -51,7 +56,7 @@ A full-stack community board application built with React (Vite + TypeScript) fr
    - Start the Orchard Core backend on http://localhost:5001
    - Start the Vite dev server on http://localhost:5173
 
-4. **Access the application**
+5. **Access the application**
    - **Frontend**: http://localhost:5173
    - **Backend API**: http://localhost:5001/api
    - **Admin UI**: http://localhost:5001/admin
