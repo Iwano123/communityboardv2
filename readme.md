@@ -1,26 +1,47 @@
-# Vite + React + Orchard Core REST API
+# Orchid - Community Board Platform
 
-A full-stack application combining a modern React frontend (Vite + TypeScript) with an Orchard Core CMS backend exposing a custom REST API with role-based permissions.
+A full-stack community board application built with React (Vite + TypeScript) frontend and Orchard Core CMS backend. Orchid enables communities to share posts, organize events, buy/sell items, and connect through messaging.
 
-## Features
+##  Features
 
-- 🔐 **Session-based Authentication** - Login/logout/register with username/password
-- 🛡️ **Fine-grained Permissions System** - Control API access per user role, content type, and HTTP method
-- 🎨 **Dynamic Admin UI** - Enhanced Orchard admin with JavaScript-powered field editors
-- 📦 **Seed System** - Database seeding for easy project setup and reset
-- ⚡ **REST API** - Full CRUD operations with relationship expansion, filtering, sorting, and pagination
+### Core Features
+-  **Posts & Content** - Create, edit, and manage community posts with categories
+-  **Events** - Organize and discover local community events
+-  **Messaging** - Real-time chat and messaging system
+-  **Marketplace** - Buy and sell items within the community
+-  **User Profiles** - Personal profiles with user information
+-  **Real-time Notifications** - Push notifications for messages and updates
+-  **Dark Mode** - Light and dark theme support
+-  **Mobile-First Design** - Responsive design optimized for mobile devices
 
-# Important
-The admin user name is "tom" with the password "Abcd1234!"
+### Technical Features
+-  **Session-based Authentication** - Secure login/logout/register system
+-  **Role-based Permissions** - Fine-grained access control per user role
+-  **REST API** - Full CRUD operations with filtering, sorting, and pagination
+-  **Database Seed System** - Easy setup and reset functionality
+-  **Modern UI** - Bootstrap 5 with custom styling and mobile navigation
 
-## Quick Start
+## 🚀 Quick Start
 
-1. **Install dependencies**
+### Prerequisites
+- Node.js (v18 or higher)
+- .NET SDK 8.0
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd communityboardv2
+   ```
+
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. **Start the application**
+3. **Start the application**
    ```bash
    npm start
    ```
@@ -30,77 +51,132 @@ The admin user name is "tom" with the password "Abcd1234!"
    - Start the Orchard Core backend on http://localhost:5001
    - Start the Vite dev server on http://localhost:5173
 
-3. **Access the application**
+4. **Access the application**
    - **Frontend**: http://localhost:5173
    - **Backend API**: http://localhost:5001/api
-   - **Admin UI**: http://localhost:5001/admin (username: `tom`, password: `Abcd1234!`)
+   - **Admin UI**: http://localhost:5001/admin
 
-## Authentication System
+## 🔑 Default Credentials
 
-The backend uses **session-based authentication** (not JWT). Users must log in to receive session cookies, which are then used for subsequent requests.
+- **Username:** `iwan`
+- **Password:** `Hejhej12345!`
+- **Role:** Administrator
+
+##  Application Pages
+
+### Public Pages
+- **Home** (`/`) - Landing page with community overview
+- **About** (`/about`) - About Orchid platform
+- **Our Vision** (`/vision`) - Platform vision and goals
+- **Featured Posts** (`/featured`) - Highlighted community posts
+
+### Authenticated Pages
+- **For You** (`/for-you`) - Personalized feed of posts
+- **Events** (`/events`) - Browse and create community events
+- **Messages** (`/messages`) - Chat and messaging interface
+- **Marketplace** (`/marketplace`) - Buy and sell items
+- **Profile** (`/profile`) - User profile management
+- **Create Post** (`/create-post`) - Create new community posts
+- **Post Details** (`/post/:id`) - View individual posts with comments
+
+### Admin Pages
+- **Admin Panel** (`/admin`) - Administrative dashboard (Administrator role required)
+
+## 🛠️ Development
+
+### Available Scripts
+
+```bash
+# Start both frontend and backend
+npm start
+
+# Start only frontend (Vite dev server)
+npm run dev
+
+# Start only backend
+npm run backend
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Save current database state as seed
+npm run save
+
+# Restore database from seed
+npm run restore
+
+# Seed sample data
+npm run seed-data
+
+# Seed events
+npm run seed-events
+
+# Check user roles
+npm run check-roles
+
+# Lint code
+npm run lint
+```
+
+### Project Structure
+
+```
+communityboardv2/
+├── backend/                    # Orchard Core backend
+│   ├── RestRoutes/            # Custom REST API implementation
+│   │   ├── AuthEndpoints.cs   # Authentication endpoints
+│   │   ├── GetRoutes.cs       # GET endpoints
+│   │   ├── PostRoutes.cs      # POST endpoints
+│   │   ├── PutRoutes.cs       # PUT endpoints
+│   │   ├── DeleteRoutes.cs    # DELETE endpoints
+│   │   ├── PermissionsACL.cs  # Permission checking
+│   │   └── MediaUploadRoutes.cs # File upload endpoints
+│   ├── App_Data/              # Runtime database (git ignored)
+│   └── App_Data.seed/         # Seed database (committed)
+├── src/                       # React frontend
+│   ├── components/            # Reusable components
+│   │   ├── MobileNav.tsx     # Mobile navigation
+│   │   ├── Header.tsx        # App header
+│   │   └── ui/               # UI component library
+│   ├── pages/                # Page components
+│   │   ├── HomePage.tsx
+│   │   ├── MessagesPage.tsx
+│   │   ├── EventsPage.tsx
+│   │   └── ...
+│   ├── contexts/             # React contexts
+│   │   └── AuthContext.tsx  # Authentication context
+│   ├── hooks/                # Custom React hooks
+│   ├── utils/                # Utility functions
+│   │   ├── api.ts           # API client
+│   │   └── auth.ts          # Auth utilities
+│   └── routes.ts             # Route configuration
+├── sass/                     # SCSS stylesheets
+│   ├── mobile.scss          # Mobile-first styles
+│   └── components/          # Component styles
+└── scripts/                   # Node.js scripts
+    ├── save-seed.js         # Save database seed
+    └── restore-seed.js      # Restore database seed
+```
+
+##  Authentication
+
+The application uses **session-based authentication** (not JWT). Users must log in to receive session cookies.
 
 ### Login
-
 ```bash
 POST /api/auth/login
 Content-Type: application/json
 
 {
-  "usernameOrEmail": "tom",
-  "password": "Abcd1234!"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "username": "tom",
-  "roles": ["Administrator"]
-}
-```
-
-The server sets a session cookie (`.AspNetCore.Identity.Application`) that must be included in subsequent requests.
-
-### Get Current User
-
-```bash
-GET /api/auth/login
-```
-
-**Response (authenticated):**
-```json
-{
-  "isAuthenticated": true,
-  "username": "tom",
-  "roles": ["Administrator"]
-}
-```
-
-**Response (not authenticated):**
-```json
-{
-  "isAuthenticated": false,
-  "username": null,
-  "roles": ["Anonymous"]
-}
-```
-
-### Logout
-
-```bash
-DELETE /api/auth/login
-```
-
-**Response:**
-```json
-{
-  "message": "Logged out successfully"
+  "usernameOrEmail": "iwan",
+  "password": "Hejhej12345!"
 }
 ```
 
 ### Register
-
 ```bash
 POST /api/auth/register
 Content-Type: application/json
@@ -110,559 +186,171 @@ Content-Type: application/json
   "email": "user@example.com",
   "password": "SecurePass123!",
   "firstName": "John",
-  "lastName": "Smith",
-  "phone": "555-1234"
+  "lastName": "Smith"
 }
 ```
 
-**Response:**
-```json
-{
-  "username": "newuser",
-  "email": "user@example.com",
-  "firstName": "John",
-  "lastName": "Smith",
-  "phone": "555-1234",
-  "role": "Customer",
-  "message": "User created successfully"
-}
+### Get Current User
+```bash
+GET /api/auth/login
 ```
 
-New users are automatically assigned the **Customer** role. The `firstName`, `lastName`, and `phone` fields are optional.
+## 📡 REST API
 
-## Media Upload
+The backend provides a comprehensive REST API for all content types.
 
-The application includes a file upload endpoint for uploading media files (images, etc.) to the server.
+### Content Types
+- **Post** - Community posts with categories
+- **Comment** - Comments on posts
+- **Event** - Community events
+- **Message** - Chat messages
+- **User** - User profiles
 
-### Upload Endpoint
+### API Endpoints
+
+#### Standard Endpoints
+```bash
+GET    /api/{contentType}           # List all items
+GET    /api/{contentType}/{id}      # Get single item
+POST   /api/{contentType}          # Create item
+PUT    /api/{contentType}/{id}     # Update item
+DELETE /api/{contentType}/{id}     # Delete item
+```
+
+#### Expand Endpoints
+```bash
+GET /api/expand/{contentType}      # List with relationships expanded
+GET /api/expand/{contentType}/{id}  # Get single item with relationships
+```
+
+### Query Parameters
+
+- **Filtering:** `?where=field=value`
+- **Sorting:** `?orderby=field` or `?orderby=-field` (descending)
+- **Pagination:** `?limit=10&offset=0`
+- **Combined:** `?where=category=Events&orderby=-created_at&limit=10`
+
+### Example API Calls
 
 ```bash
-POST /api/media-upload
-Content-Type: multipart/form-data
+# Get all posts
+GET /api/Post
 
-file: [binary file data]
-```
+# Get posts filtered by category
+GET /api/Post?where=category_name=Events
 
-**Response:**
-```json
-{
-  "success": true,
-  "fileName": "abc12345-def6-7890-abcd-ef1234567890.jpg",
-  "originalFileName": "photo.jpg",
-  "url": "/media/_Users/4qn6twzb1y5zd7f8004294agc8/abc12345-def6-7890-abcd-ef1234567890.jpg",
-  "size": 102400
-}
-```
+# Get posts with pagination
+GET /api/Post?limit=10&offset=0&orderby=-created_at
 
-**Authentication Required:** Yes - user must be logged in to upload files.
-
-### Configuration
-
-The media upload feature can be configured in `backend/RestRoutes/MediaUploadRoutes.cs` using three flags at the top of the class:
-
-```csharp
-// Which roles are allowed to upload files
-private static readonly HashSet<string> ALLOWED_ROLES = new()
-{
-    "Administrator",
-    "Customer"  // Add/remove roles as needed
-};
-
-// Should files be organized in user-specific subfolders?
-private static readonly bool USE_USER_SUBFOLDERS = true;
-
-// Maximum file size in megabytes
-private static readonly int MAX_FILE_SIZE_MB = 10;
-```
-
-**File Organization:**
-- If `USE_USER_SUBFOLDERS = true`: Files are saved to `App_Data/Sites/Default/Media/_Users/{userId}/`
-- If `USE_USER_SUBFOLDERS = false`: Files are saved to `App_Data/Sites/Default/Media/`
-- Filenames are automatically generated using GUIDs to prevent collisions
-
-### Frontend Example
-
-A simple frontend example is included in `src/` that demonstrates:
-- Login form (`src/components/Login.tsx`)
-- File upload form (`src/components/FileUpload.tsx`)
-- Authentication state management (`src/utils/auth.ts`)
-- Media upload utility (`src/utils/mediaUploader.ts`)
-
-**Note for Production:** In a full-scale application, you would typically:
-- Use React Router to handle login on a dedicated route
-- Store the authenticated user in a Context or similar state management solution so all components have access to the current user
-- The included example keeps authentication state local to the App component for simplicity
-
-## REST API
-
-The application provides a custom REST API for all Orchard Core content types. All endpoints (except authentication) are protected by the permissions system.
-
-### Content Type: Pet
-
-#### Get All Pets
-
-```bash
-GET /api/Pet
-```
-
-**Response:**
-```json
-[
-  {
-    "id": "4h72v3vvnffvzyjjyny8xgc2xz",
-    "title": "Fido",
-    "species": "dog",
-    "ownerId": "4hef7jjdb26sdxshq3ddg87mm1"
-  },
-  {
-    "id": "40sk48hnkka1tsfdkhhk6vprch",
-    "title": "Garfield",
-    "species": "cat",
-    "ownerId": "4237v01g4sxw41mybx97wg6adf"
-  }
-]
-```
-
-#### Get Single Pet
-
-```bash
-GET /api/Pet/4h72v3vvnffvzyjjyny8xgc2xz
-```
-
-**Response:**
-```json
-{
-  "id": "4h72v3vvnffvzyjjyny8xgc2xz",
-  "title": "Fido",
-  "species": "dog",
-  "ownerId": "4hef7jjdb26sdxshq3ddg87mm1"
-}
-```
-
-#### Create Pet
-
-```bash
-POST /api/Pet
+# Create a new post
+POST /api/Post
 Content-Type: application/json
 
 {
-  "title": "Buddy",
-  "species": "dog"
+  "title": "Community BBQ",
+  "content": "Join us for a community BBQ this Saturday!",
+  "category_name": "Events"
 }
 ```
 
-**Response:**
-```json
-{
-  "id": "4new1234example5678id",
-  "title": "Buddy"
-}
-```
+##  Styling
 
-**Supported Field Types:**
+The application uses:
+- **Bootstrap 5** - UI framework
+- **Bootstrap Icons** - Icon library
+- **SASS/SCSS** - Styling preprocessor
+- **Mobile-first** - Responsive design approach
+- **Dark mode** - Theme switching support
 
-When creating or updating content, use the **same format** you receive from `GET /api/{contentType}` (not the raw format from `/api/raw/{contentType}`). The API automatically unwraps single-property fields for cleaner JSON:
+### Mobile Navigation
 
-- **TextField** - Plain string: `"species": "dog"`
-- **NumericField** - Plain number: `"age": 5`
-- **BooleanField** - Plain boolean: `"isActive": true`
-- **DateField** - ISO 8601 string: `"birthDate": "2020-01-15T00:00:00Z"`
-- **DateTimeField** - ISO 8601 string: `"createdAt": "2025-10-28T10:30:00Z"`
-- **HtmlField** - Plain HTML string: `"description": "<p>A friendly dog</p>"`
-- **MarkdownField** - Plain markdown string: `"bio": "# Fido\nA good boy"`
+The app includes a mobile bottom navigation bar with:
+- Home
+- For You
+- Events
+- Messages
+- Profile
 
-Multi-property fields (like LinkField and MediaField) are best created through the admin UI.
+##  Notifications
 
-#### Update Pet
+The application supports:
+- **Real-time notifications** via Server-Sent Events (SSE)
+- **Push notifications** (browser notifications)
+- **In-app notification dropdown**
 
-```bash
-PUT /api/Pet/4new1234example5678id
-Content-Type: application/json
+## 📦 Database Seed System
 
-{
-  "title": "Buddy Updated",
-  "species": "wolf"
-}
-```
-
-**Response:**
-```json
-{
-  "id": "4new1234example5678id",
-  "title": "Buddy Updated"
-}
-```
-
-**Note:** PUT accepts the same field format as POST (see Supported Field Types above).
-
-#### Delete Pet
+The project includes a seed system for easy setup:
 
 ```bash
-DELETE /api/Pet/4new1234example5678id
-```
-
-**Response:**
-```json
-{
-  "message": "Item deleted successfully"
-}
-```
-
-### API Endpoint Variants
-
-The REST API provides three different endpoint variants for GET requests, each serving different use cases:
-
-#### Standard Endpoints: `/api/{contentType}`
-Clean, minimal JSON structure with only the essential fields.
-
-```bash
-GET /api/Pet
-GET /api/Pet/{id}
-```
-
-#### Expand Endpoints: `/api/expand/{contentType}`
-Same clean structure, but with relationship fields automatically populated.
-
-```bash
-GET /api/expand/Pet
-GET /api/expand/Pet/{id}
-```
-
-#### Raw Endpoints: `/api/raw/{contentType}`
-Returns the raw Orchard Core ContentItem structure without cleanup or population. Useful for debugging, advanced queries, or when you need access to Orchard Core metadata.
-
-```bash
-GET /api/raw/Pet
-GET /api/raw/Pet/{id}
-```
-
-**Raw endpoint response includes:**
-- Full ContentItem structure
-- Orchard Core metadata (ContentItemId, ContentItemVersionId, ContentType, etc.)
-- All part and field data in Orchard's native format
-- Publication status, creation/modification dates
-- Display text and other system fields
-
-**Note:** Raw endpoints support all query parameters (where, orderby, limit, offset) just like standard endpoints.
-
-### Expanding Relationships
-
-For content types with relationships (like Pet → PetOwner), you can expand related content using the expand endpoints.
-
-#### Get Pet with Expanded Owner
-
-```bash
-GET /api/expand/Pet
-```
-
-**Response:**
-```json
-[
-  {
-    "id": "40sk48hnkka1tsfdkhhk6vprch",
-    "title": "Garfield",
-    "species": "cat",
-    "ownerId": "4237v01g4sxw41mybx97wg6adf",
-    "owner": {
-      "id": "4237v01g4sxw41mybx97wg6adf",
-      "title": "John Doe",
-      "email": "john@example.com"
-    }
-  },
-  {
-    "id": "4h72v3vvnffvzyjjyny8xgc2xz",
-    "title": "Fido",
-    "species": "dog",
-    "ownerId": "4hef7jjdb26sdxshq3ddg87mm1",
-    "owner": {
-      "id": "4hef7jjdb26sdxshq3ddg87mm1",
-      "title": "Jane Smith",
-      "email": "jane@example.com"
-    }
-  }
-]
-```
-
-**Using standard endpoint (no expansion):**
-```bash
-GET /api/Pet
-```
-
-Returns only the owner ID (relationship not expanded):
-```json
-[
-  {
-    "id": "40sk48hnkka1tsfdkhhk6vprch",
-    "title": "Garfield",
-    "species": "cat",
-    "ownerId": "4237v01g4sxw41mybx97wg6adf"
-  }
-]
-```
-
-### Filtering, Sorting, and Pagination
-
-The REST API supports powerful query parameters for filtering, sorting, and pagination on all GET endpoints.
-
-#### Filtering with WHERE
-
-Use the `where` parameter to filter results. Supports deep property paths with dot notation.
-
-**Supported Operators:**
-- `=` - Equals
-- `!=` - Not equals
-- `>` - Greater than
-- `<` - Less than
-- `>=` - Greater than or equal
-- `<=` - Less than or equal
-- `LIKE` - Case-insensitive substring match
-
-**Examples:**
-
-```bash
-# Filter by species
-GET /api/Pet?where=species=dog
-
-# Filter with deep property path
-GET /api/expand/Pet?where=owner.title=John Doe
-
-# Multiple conditions (use AND)
-GET /api/Pet?where=species=dog AND ownerId!=null
-
-# LIKE for substring matching
-GET /api/expand/Pet?where=owner.title LIKE Smith
-```
-
-#### Sorting with ORDER BY
-
-Use the `orderby` parameter to sort results. Prefix with `-` for descending order.
-
-**Examples:**
-
-```bash
-# Sort by title (ascending)
-GET /api/Pet?orderby=title
-
-# Sort by title (descending)
-GET /api/Pet?orderby=-title
-
-# Multiple sort fields
-GET /api/Pet?orderby=-species,title
-
-# Sort by deep property path
-GET /api/expand/Pet?orderby=owner.title
-```
-
-#### Pagination with LIMIT and OFFSET
-
-Use `limit` and `offset` parameters for pagination.
-
-**Examples:**
-
-```bash
-# Get first 10 items
-GET /api/Pet?limit=10
-
-# Get next 10 items (skip first 10)
-GET /api/Pet?limit=10&offset=10
-
-# Offset without limit (skip first 5 items)
-GET /api/Pet?offset=5
-```
-
-#### Combining Query Parameters
-
-All query parameters can be combined for powerful queries:
-
-```bash
-# Filter dogs, sort by title, paginate
-GET /api/Pet?where=species=dog&orderby=title&limit=10&offset=0
-
-# Filter by owner name with expansion, sort, and limit
-GET /api/expand/Pet?where=owner.title LIKE Doe&orderby=-species&limit=5
-```
-
-**Complex Example:**
-
-```bash
-GET /api/expand/Pet?where=species=cat AND owner.email LIKE example.com&orderby=-title&limit=10&offset=0
-```
-
-This query:
-1. Expands the owner relationship
-2. Filters for cats whose owner's email contains "example.com"
-3. Sorts by title (descending)
-4. Returns 10 results, starting from the first
-
-## Permissions System
-
-Access to REST endpoints is controlled by **RestPermissions** - a custom content type that defines which roles can perform which HTTP methods on which content types.
-
-### How It Works
-
-1. **Every API request** (except auth) checks permissions before processing
-2. Permissions are defined by creating **RestPermissions items** in the admin UI
-3. Each permission specifies:
-   - **Roles** - Which roles this permission applies to (comma-separated)
-   - **Content Types** - Which content types this permission covers (comma-separated)
-   - **REST Methods** - Which HTTP methods are allowed (checkboxes: GET, POST, PUT, DELETE)
-
-### Example Permission
-
-**Title:** "Anonymous can view pets"
-- **Roles:** `Anonymous`
-- **Content Types:** `Pet,PetOwner`
-- **REST Methods:** `GET`
-
-This allows unauthenticated users to read Pet and PetOwner data, but not create, update, or delete.
-
-### Special Cases
-
-- **Anonymous Role:** All users (authenticated or not) are in the `Anonymous` role
-- **Administrator Bypass:** Users with the `Administrator` role always have access to system endpoints (`/api/system/*`)
-- **Multiple Permissions:** If a user has multiple roles, they get the combined permissions of all their roles
-
-### Managing Permissions
-
-1. Log in to the admin UI: http://localhost:5001/admin (username: `tom`, password: `Abcd1234!`)
-2. Navigate to Content → Content Items
-3. Create a new **RestPermissions** item
-4. Use the enhanced UI with checkboxes (automatically populated from your content types and roles)
-
-### Permission Check Flow
-
-```
-Request: GET /api/Pet
-   ↓
-1. Extract user roles from session
-   - Authenticated: ["Customer", "Anonymous"]
-   - Not authenticated: ["Anonymous"]
-   ↓
-2. Query RestPermissions for: contentType="Pet", method="GET"
-   ↓
-3. Check if any user role has permission
-   - If YES → Allow request
-   - If NO → Return 403 Forbidden
-```
-
-## Database Seed System
-
-The project uses a seed system to manage the Orchard Core database, making it easy for students to get started or reset their environment.
-
-### Available Commands
-
-```bash
-# Save current database state as seed
+# Save current database state
 npm run save
 
-# Restore database from seed
+# Restore from seed
 npm run restore
-
-# Start backend (auto-restores if no database exists)
-npm run backend
 ```
 
-### How It Works
+The seed is automatically restored on first run.
 
-- **Seed Location:** `backend/App_Data.seed/` (committed to git)
-- **Runtime Database:** `backend/App_Data/` (ignored by git)
-- **First Run:** When you run `npm start` or `npm run backend` for the first time, the seed is automatically restored
-- **Logs:** Log files are excluded from the seed (they're runtime artifacts)
+## 🛡️ Permissions System
 
-### When to Save
+Access to REST endpoints is controlled by **RestPermissions** content items that define:
+- **Roles** - Which roles can access
+- **Content Types** - Which content types
+- **REST Methods** - Which HTTP methods (GET, POST, PUT, DELETE)
 
-As a teacher/maintainer, run `npm run save` after making changes you want students to have:
-- Adding new content types
-- Creating sample data
-- Modifying roles or permissions
-- Uploading media files
+Permissions are managed through the admin UI at `/admin`.
 
-Students will get these changes when they clone the repo and run `npm start`.
-
-## Project Structure
-
-```
-vite-and-react-and-orchard-core/
-├── backend/
-│   ├── RestRoutes/              # Custom REST API implementation
-│   │   ├── AuthEndpoints.cs     # Login/logout endpoints
-│   │   ├── GetRoutes.cs         # GET endpoints with expand support
-│   │   ├── PostRoutes.cs        # POST endpoints
-│   │   ├── PutRoutes.cs         # PUT endpoints
-│   │   ├── DeleteRoutes.cs      # DELETE endpoints
-│   │   ├── PermissionsACL.cs    # Permission checking logic
-│   │   ├── SystemRoutes.cs      # Admin UI helper endpoints
-│   │   ├── SetupRoutes.cs       # Route registration
-│   │   └── admin-script.js      # Admin UI enhancements
-│   ├── App_Data/                # Runtime database (git ignored)
-│   └── App_Data.seed/           # Seed database (committed)
-├── scripts/
-│   ├── save-seed.js             # Save database to seed
-│   ├── restore-seed.js          # Restore database from seed
-│   └── ensure-setup.js          # Auto-restore on first run
-├── src/                         # React frontend
-└── package.json
-```
-
-## Default Credentials
-
-- **Username:** `tom`
-- **Password:** `Abcd1234!`
-- **Roles:** Administrator
-
-## Sample Data
-
-The seed includes:
-- **Content Types:** Pet, PetOwner, RestPermissions
-- **Sample Pets:** Fido, Garfield, Snoopy, etc.
-- **Sample Owners:** John Doe
-- **Roles:** Administrator, Customer, Anonymous, and others
-- **Default Permissions:** Examples showing how to configure API access
-
-## Development Workflow
-
-### Frontend Development
-```bash
-npm run dev          # Start only Vite dev server
-```
-
-### Backend Development
-```bash
-npm run backend      # Start only backend server
-```
-
-### Full Stack
-```bash
-npm start           # Start both frontend and backend
-```
-
-### Reset Database
-```bash
-npm run restore     # Reset to seed state
-```
-
-## Troubleshooting
+## 🐛 Troubleshooting
 
 ### Port Already in Use
-If port 5001 is busy:
-
-**macOS/Linux:**
-```bash
-lsof -ti:5001 | xargs kill -9
-```
 
 **Windows (PowerShell):**
 ```powershell
 Get-Process -Id (Get-NetTCPConnection -LocalPort 5001).OwningProcess | Stop-Process -Force
 ```
 
-**Windows (Command Prompt):**
-```cmd
-for /f "tokens=5" %a in ('netstat -aon ^| find ":5001" ^| find "LISTENING"') do taskkill /F /PID %a
+**macOS/Linux:**
+```bash
+lsof -ti:5001 | xargs kill -9
 ```
 
 ### Database Issues
-Reset to a clean (initial / last saved) state:
+
+Reset to clean state:
 ```bash
 npm run restore
 ```
+
+### Build Issues
+
+Clear node_modules and reinstall:
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+
+## Notes
+
+- The application uses Orchard Core CMS as the backend
+- Content types are managed through the admin UI
+- Media uploads are stored in `App_Data/Sites/Default/Media/`
+- Session cookies are required for authenticated requests
+- Mobile navigation is automatically shown on screens < 768px
+
+##  Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+##  License
+
+[Add your license information here]
+
+##  Acknowledgments
+
+- Built with [Orchard Core CMS](https://www.orchardcore.net/)
+- Frontend powered by [React](https://react.dev/) and [Vite](https://vitejs.dev/)
+- UI components from [Bootstrap](https://getbootstrap.com/)
