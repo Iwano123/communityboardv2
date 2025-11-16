@@ -12,7 +12,7 @@ public static class MediaUploadRoutes
     private static readonly HashSet<string> ALLOWED_ROLES = new(StringComparer.OrdinalIgnoreCase)
     {
         "Administrator",
-        "Customer"
+        "Member"
     };
 
     private static readonly bool USE_USER_SUBFOLDERS = true;
