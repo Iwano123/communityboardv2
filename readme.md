@@ -47,9 +47,9 @@ A full-stack community board application built with React (Vite + TypeScript) fr
     ```
     
 4.  **Start the application**
-   ```bash
+    ```bash
     npm start
-   ```
+    ```
 
    This will:
    - Auto-restore the database from seed (first time only)
