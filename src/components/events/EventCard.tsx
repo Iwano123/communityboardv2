@@ -1,9 +1,10 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Trash2 } from "lucide-react";
+import { Calendar, MapPin, Trash2, Navigation } from "lucide-react";
 import { format } from "date-fns";
 import type { Event } from "@/hooks/useEvents";
+import { formatDistance } from "@/utils/distance";
 
 interface EventCardProps {
   event: Event;
@@ -88,6 +89,12 @@ export function EventCard({ event, userId, onDelete, getEventStatus }: EventCard
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" />
               <span>{event.location}</span>
+            </div>
+          )}
+          {event.distance !== undefined && (
+            <div className="flex items-center gap-2 text-sm text-primary font-medium">
+              <Navigation className="h-4 w-4" />
+              <span>{formatDistance(event.distance)} away</span>
             </div>
           )}
         </div>

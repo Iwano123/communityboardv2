@@ -34,6 +34,8 @@ export function LocationSettings() {
         setLongitude(lon);
         localStorage.setItem("userLatitude", lat);
         localStorage.setItem("userLongitude", lon);
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new Event("locationUpdated"));
         toast.success("Location saved!");
         setIsLoading(false);
       },
@@ -65,6 +67,8 @@ export function LocationSettings() {
 
     localStorage.setItem("userLatitude", latitude);
     localStorage.setItem("userLongitude", longitude);
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new Event("locationUpdated"));
     toast.success("Location saved!");
   };
 
