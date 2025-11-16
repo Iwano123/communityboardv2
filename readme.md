@@ -67,6 +67,14 @@ A full-stack community board application built with React (Vite + TypeScript) fr
 - **Password:** `Hejhej12345!`
 - **Role:** Administrator
 
+- **Username:** `abdi`
+- **Password:** `Abdi12345!`
+- **Role:** Moderator
+
+- **Username:** `testpilot`
+- **Password:** `Hejhej123!`
+- **Role:** Member/User
+
 ##  Application Pages
 
 ### Public Pages
