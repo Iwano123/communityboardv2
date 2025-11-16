@@ -147,3 +147,6 @@ Thumbs.db
 
 # Temporary directory for testing student projects
 temp-student-projects/
+
+# Old/unused database files
+backend/_db.sqlite3
