@@ -72,19 +72,27 @@ public static class AuthEndpoints
                 
                 Console.WriteLine($"[REGISTER] User created successfully: {user.UserName}");
 
-                // Assign Customer role (must exist in Orchard)
+                // Assign Member role (must exist in Orchard)
                 try
                 {
-                    var roleResult = await userManager.AddToRoleAsync(user, "Customer");
-                    if (!roleResult.Succeeded)
+                    var roles = await userManager.GetRolesAsync(user);
+                    if (!roles.Contains("Member"))
                     {
-                        Console.WriteLine($"[REGISTER] Warning: Failed to assign Customer role. Errors: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
-                        // Continue anyway - user is created
+                        var roleResult = await userManager.AddToRoleAsync(user, "Member");
+                        if (!roleResult.Succeeded)
+                        {
+                            Console.WriteLine($"[REGISTER] Warning: Failed to assign Member role. Errors: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+                            // Continue anyway - user is created
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[REGISTER] Successfully assigned Member role to {user.UserName}");
+                        }
                     }
                 }
                 catch (Exception roleEx)
                 {
-                    Console.WriteLine($"[REGISTER] Exception assigning Customer role: {roleEx.Message}");
+                    Console.WriteLine($"[REGISTER] Exception assigning Member role: {roleEx.Message}");
                     // Continue anyway - user is created
                 }
 
@@ -97,7 +105,7 @@ public static class AuthEndpoints
                     firstName = request.FirstName,
                     lastName = request.LastName,
                     phone = request.Phone,
-                    role = "Customer",
+                    role = "Member",
                     message = "User created successfully"
                 });
             }
@@ -176,7 +184,33 @@ public static class AuthEndpoints
                 
                 Console.WriteLine($"[LOGIN] Login successful for user: {user.UserName}");
 
+                // Ensure user has Member role if they don't have Administrator or Moderator
+                try
+                {
+                    var roles = await userManager.GetRolesAsync(user);
+                    if (!roles.Contains("Member") && !roles.Contains("Administrator") && !roles.Contains("Moderator"))
+                    {
+                        var roleResult = await userManager.AddToRoleAsync(user, "Member");
+                        if (roleResult.Succeeded)
+                        {
+                            Console.WriteLine($"[LOGIN] Assigned Member role to {user.UserName}");
+                            // Refresh roles after adding
+                            roles = await userManager.GetRolesAsync(user);
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[LOGIN] Warning: Failed to assign Member role. Errors: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+                        }
+                    }
+                }
+                catch (Exception roleEx)
+                {
+                    Console.WriteLine($"[LOGIN] Exception assigning Member role: {roleEx.Message}");
+                    // Continue anyway - login succeeded
+                }
+
                 var u = user as User;
+                var finalRoles = await userManager.GetRolesAsync(user);
                 return Results.Ok(new
                 {
                     id = u?.UserId,
@@ -185,9 +219,7 @@ public static class AuthEndpoints
                     phoneNumber = u?.PhoneNumber,
                     firstName = u?.Properties?["FirstName"]?.ToString(),
                     lastName = u?.Properties?["LastName"]?.ToString(),
-                    roles = context.User.FindAll(ClaimTypes.Role)
-                        .Select(c => c.Value)
-                        .ToList()
+                    roles = finalRoles
                 });
             }
             catch (Exception ex)
